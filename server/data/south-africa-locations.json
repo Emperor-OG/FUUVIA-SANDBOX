@@ -1,0 +1,113 @@
+[
+  {
+    "province": "Gauteng",
+    "cities": [
+      "Johannesburg",
+      "Pretoria",
+      "Midrand",
+      "Sandton",
+      "Soweto",
+      "Centurion",
+      "Alberton",
+      "Benoni",
+      "Boksburg",
+      "Roodepoort"
+    ]
+  },
+  {
+    "province": "Limpopo",
+    "cities": [
+      "Polokwane",
+      "Thohoyandou",
+      "Tzaneen",
+      "Musina",
+      "Louis Trichardt",
+      "Giyani",
+      "Lebowakgomo",
+      "Mokopane"
+    ]
+  },
+  {
+    "province": "Western Cape",
+    "cities": [
+      "Cape Town",
+      "Stellenbosch",
+      "Paarl",
+      "George",
+      "Hermanus",
+      "Worcester",
+      "Somerset West",
+      "Mossel Bay"
+    ]
+  },
+  {
+    "province": "KwaZulu-Natal",
+    "cities": [
+      "Durban",
+      "Pietermaritzburg",
+      "Umhlanga",
+      "Richards Bay",
+      "Newcastle",
+      "Ballito",
+      "Ladysmith",
+      "Port Shepstone"
+    ]
+  },
+  {
+    "province": "Eastern Cape",
+    "cities": [
+      "Gqeberha",
+      "East London",
+      "Mthatha",
+      "Queenstown",
+      "Grahamstown",
+      "Bhisho",
+      "Jeffreys Bay"
+    ]
+  },
+  {
+    "province": "Free State",
+    "cities": [
+      "Bloemfontein",
+      "Welkom",
+      "Bethlehem",
+      "Sasolburg",
+      "Kroonstad",
+      "Phuthaditjhaba"
+    ]
+  },
+  {
+    "province": "Mpumalanga",
+    "cities": [
+      "Nelspruit",
+      "Witbank",
+      "Secunda",
+      "Standerton",
+      "Middelburg",
+      "Ermelo",
+      "Sabie"
+    ]
+  },
+  {
+    "province": "North West",
+    "cities": [
+      "Rustenburg",
+      "Mahikeng",
+      "Klerksdorp",
+      "Potchefstroom",
+      "Brits",
+      "Vryburg"
+    ]
+  },
+  {
+    "province": "Northern Cape",
+    "cities": [
+      "Kimberley",
+      "Upington",
+      "Springbok",
+      "De Aar",
+      "Kuruman",
+      "Colesberg"
+    ]
+  }
+]
