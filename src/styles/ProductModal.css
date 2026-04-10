@@ -1,0 +1,382 @@
+/* =====================
+   Root / Overlay
+===================== */
+
+.product-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: auto;
+}
+
+.product-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* =====================
+   Modal Shell
+===================== */
+
+.product-modal-shell {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 95%;
+  max-width: 520px;
+  max-height: 85dvh;
+  transform: translate(-50%, -50%);
+  background: var(--primary-bg);
+  color: var(--text);
+  border-radius: 16px;
+  padding: 18px;
+  box-sizing: border-box;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: productModalIn 0.22s ease;
+}
+
+/* =====================
+   Header
+===================== */
+
+.product-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.product-modal-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.18;
+}
+
+.product-modal-close {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* =====================
+   Body
+===================== */
+
+.product-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 14px;
+  padding-right: 6px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.product-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.product-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.product-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 999px;
+}
+
+/* =====================
+   Footer
+===================== */
+
+.product-modal-footer {
+  flex-shrink: 0;
+  padding-top: 14px;
+}
+
+/* =====================
+   Slider
+===================== */
+
+.product-modal-slider {
+  position: relative;
+  width: 100%;
+  height: 40vh;
+  min-height: 260px;
+  max-height: 360px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #0000000a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.product-slider-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.product-slide-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font-size: 1.8rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.product-slide-btn.left {
+  left: 10px;
+}
+
+.product-slide-btn.right {
+  right: 10px;
+}
+
+/* =====================
+   Thumbnails
+===================== */
+
+.product-thumbnail-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.product-thumbnail {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.product-thumbnail.active {
+  border-color: #007bff;
+}
+
+/* =====================
+   Variants / Sizes
+===================== */
+
+.product-variant-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.product-variant-box h4 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.product-variant-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: var(--variant-box);
+  cursor: pointer;
+}
+
+.product-variant-option input {
+  accent-color: #007bff;
+}
+
+.product-variant-stock {
+  margin-left: 4px;
+  color: #777;
+  font-size: 0.85rem;
+}
+
+.product-size-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.product-size-btn {
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.product-size-btn.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: #fff;
+}
+
+.product-size-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.product-size-stock {
+  font-size: 0.78rem;
+}
+
+/* =====================
+   Info
+===================== */
+
+.product-description {
+  margin: 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--primary-bg);
+  color: #444;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.product-price-box,
+.product-stock-box {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* =====================
+   Quantity
+===================== */
+
+.product-qty-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.product-qty-box button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: #000;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.product-qty-box span {
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+
+/* =====================
+   Add Button
+===================== */
+
+.product-add-btn {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  background: #007bff;
+  color: #fff;
+  padding: 13px 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.product-add-btn:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+
+/* =====================
+   Animation
+===================== */
+
+@keyframes productModalIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* =====================
+   Mobile
+===================== */
+
+@media (max-width: 768px) {
+  .product-modal-shell {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    height: 100%;
+    transform: none;
+    border-radius: 0;
+    padding: 18px 18px 14px;
+    box-shadow: none;
+    animation: none;
+  }
+
+  .product-modal-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .product-modal-body {
+    margin-top: 12px;
+    padding-right: 0;
+    padding-bottom: 10px;
+  }
+
+  .product-modal-slider {
+    height: 220px;
+    min-height: 220px;
+    max-height: 220px;
+  }
+
+  .product-modal-footer {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}

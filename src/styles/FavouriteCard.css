@@ -1,0 +1,156 @@
+/* Favourite card */
+.favourite-card {
+  height: 160px; /* smaller than normal store card */
+  width: 140px;  /* fixed width for uniformity */
+  background: var(--primary-bg);
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative; /* positioning context for logo */
+  flex: 0 0 auto;     /* important for horizontal row */
+  margin: 0;
+}
+
+.favourite-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Banner */
+.favourite-banner {
+  width: 100%;
+  height: 100px; /* smaller proportion */
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  border-bottom: 1px solid silver;
+}
+
+/* Logo */
+.favourite-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid blueviolet;
+  position: absolute;
+  top: 80px;
+  left: 8px;
+  background: var(--primary-bg);
+  object-fit: cover;
+}
+
+/* Store name */
+.favourite-name {
+  position: absolute;
+  color: var(--text);
+  margin-top: 45px;
+  left: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Location */
+.favourite-location {
+  position: absolute;
+  color: #000;
+  top: 88%;
+  left: 8px;
+  font-size: 12px;
+}
+
+/* Store number */
+.favourite-number {
+  position: absolute;
+  top: 120px;
+  right: 8px;
+  font-size: 0.8rem;
+  background-color: #000;
+  color: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-weight: bold;
+}
+
+/* Heart button */
+.favourite-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: skyblue;
+}
+
+.favourite-btn.favourited {
+  color: red;
+}
+
+/* Store info */
+.favourite-info {
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3px 8px;
+  padding-left: 50px; /* space for logo */
+  box-sizing: border-box;
+}
+
+.favourite-info h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.favourite-info p {
+  font-size: 11px;
+  margin: 1px 0 0 0;
+  line-height: 1.1;
+}
+
+/* ===================== */
+/* MOBILE ADJUSTMENTS     */
+/* ===================== */
+@media (max-width: 768px) {
+  .favourite-card {
+    width: 130px;
+    max-height: 160px
+  }
+
+  .favourite-banner {
+    height: 80px;
+  }
+
+  .favourite-logo {
+    width: 40px;
+    height: 40px;
+    top: 60px;
+  }
+
+  .favourite-name {
+    margin-top: 40px;
+  }
+
+  .favourite-info {
+    display: flex;
+    margin-top: 15px;
+  }
+
+  .favourite-number {
+    width: 20px;
+    height: 20px;
+    top: 68%;
+  }
+}

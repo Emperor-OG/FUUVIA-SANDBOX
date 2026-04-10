@@ -1,0 +1,228 @@
+/* =========================
+   Page container
+========================= */
+.store-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  background: var(--secondary-bg);
+}
+
+/* =========================
+   Layout
+========================= */
+.store-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* =========================
+   Main content
+========================= */
+.store-container {
+  position: relative;
+  width: 100%;
+  margin-top: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0 0 6rem;
+  box-sizing: border-box;
+  min-height: calc(100vh - 60px);
+  background: var(--secondary-bg);
+}
+
+/* =========================
+   Hero / top store panel
+========================= */
+.store-hero {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* =========================
+   Products section
+========================= */
+.store-products-section {
+  width: 100%;
+  padding: 0 1.25rem 1rem;
+  box-sizing: border-box;
+}
+
+/* =========================
+   Loading / error
+========================= */
+.store-loading-wrap {
+  padding: 2rem 1rem;
+}
+
+.store-error {
+  color: #dc2626;
+  padding: 1rem 1.25rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* =========================
+   Floating cart button
+========================= */
+.cart-float-btn {
+  position: fixed;
+  top: 95px;
+  right: 18px;
+  width: 58px;
+  height: 58px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 25px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.cart-float-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.26);
+}
+
+.cart-float-btn:active {
+  transform: scale(0.97);
+}
+
+.cart-float-btn .cart-count {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  min-width: 22px;
+  height: 22px;
+  background: #ff4765;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  box-shadow: 0 4px 10px rgba(255, 71, 101, 0.35);
+}
+
+/* =========================
+   Store status pill
+========================= */
+.store-status {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.store-status.open {
+  color: #16a34a;
+  background-color: rgba(22, 163, 74, 0.1);
+  border: 1px solid rgba(22, 163, 74, 0.18);
+}
+
+.store-status.closed {
+  color: #dc2626;
+  background-color: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.15);
+}
+
+/* Floating position */
+.store-status-floating {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 998;
+}
+
+/* =========================
+   Tablet
+========================= */
+@media (max-width: 1024px) {
+  .store-products-section {
+    padding: 0 1rem 1rem;
+  }
+}
+
+/* =========================
+   Mobile
+========================= */
+@media (max-width: 768px) {
+  .store-container {
+    margin-top: 60px;
+    gap: 0.75rem;
+    padding: 0 0 5.5rem;
+    margin-bottom: 0;
+  }
+
+  .store-hero {
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  .store-products-section {
+    padding: 0 0.75rem 1rem;
+  }
+
+  .cart-float-btn {
+    top: 110px;
+    right: 14px;
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+
+  .cart-float-btn .cart-count {
+    top: -3px;
+    right: -2px;
+  }
+
+  .store-status-floating {
+    bottom: 78px;
+    right: 16px;
+  }
+
+  .store-error {
+    padding: 1rem 0.75rem 0;
+  }
+}
+
+/* =========================
+   Small mobile
+========================= */
+@media (max-width: 480px) {
+  .store-products-section {
+    padding: 0 0.5rem 1rem;
+  }
+
+  .cart-float-btn {
+    top: 108px;
+    right: 12px;
+    width: 54px;
+    height: 54px;
+    font-size: 22px;
+  }
+
+  .store-status-floating {
+    right: 12px;
+  }
+}

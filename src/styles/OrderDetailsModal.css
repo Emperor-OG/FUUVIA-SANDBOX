@@ -1,0 +1,111 @@
+/* Overlay */
+.odm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+/* Modal */
+.odm-modal {
+  background: var(--primary-bg);
+  color: var(--text);
+  border-radius: 12px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  animation: odm-fade-in 0.2s ease-in-out;
+  font-family: Arial, sans-serif;
+}
+
+/* Header */
+.odm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.odm-close-btn {
+  background: none;
+  color: var(--text);
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.odm-close-btn:hover {
+  color: red;
+}
+
+/* Section */
+.odm-section {
+  margin-bottom: 1rem;
+}
+
+.odm-section h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.odm-section p {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+/* Items */
+.odm-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.odm-item-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.odm-item-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.odm-item-details p {
+  margin: 0.2rem 0;
+}
+
+/* Empty items */
+.odm-empty-items {
+  color: #888;
+  font-style: italic;
+}
+
+/* Total */
+.odm-total-section {
+  text-align: right;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* Fade in */
+@keyframes odm-fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

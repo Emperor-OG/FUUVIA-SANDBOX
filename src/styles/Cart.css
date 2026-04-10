@@ -1,0 +1,217 @@
+/* =====================
+   Overlay
+===================== */
+
+.cart-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* =====================
+   Drawer
+===================== */
+
+.cart-drawer {
+  width: 350px;
+  max-width: 90%;
+  height: 100%;
+  background-color: var(--primary-bg);
+  color: var(--text);
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 20px 20px 0; /* ⬅️ remove bottom padding */
+  overflow: hidden; /* important */
+}
+
+/* =====================
+   Header
+===================== */
+
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  border-bottom: 1px solid var(--text);
+  flex-shrink: 0;
+}
+
+.cart-header h2 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.cart-close {
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.cart-close:hover {
+  color: #ff4d4d;
+}
+
+/* =====================
+   Items (Scrollable)
+===================== */
+
+.cart-items {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 10px;
+}
+
+/* Item */
+.cart-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #000;
+  gap: 5px;
+}
+
+.cart-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.cart-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-item-info h4 {
+  margin: 0 0 5px 0;
+  font-size: 1rem;
+}
+
+.cart-item-info p {
+  margin: 0 0 10px 0;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+/* =====================
+   Quantity
+===================== */
+
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.qty-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #ccc;
+  background: #656565;
+  cursor: pointer;
+  font-size: 1rem;
+  border-radius: 4px;
+}
+
+.qty-btn:hover {
+  background: #e0e0e0;
+}
+
+.qty-text {
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Trash */
+.trash-btn {
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.trash-btn:hover {
+  color: #ff0000;
+}
+
+/* =====================
+   Empty
+===================== */
+
+.empty-cart-text {
+  padding: 20px;
+  text-align: center;
+  color: #777;
+}
+
+/* =====================
+   Footer (FIXED FEEL)
+===================== */
+
+.cart-footer {
+  flex-shrink: 0;
+  background: var(--primary-bg);
+  border-top: 1px solid #ddd;
+
+  padding: 12px 0 18px; /* ⬅️ tighter bottom */
+}
+
+.cart-footer h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+}
+
+/* =====================
+   Checkout Button
+===================== */
+
+.checkout-btn {
+  background-color: #2d87f0;
+  color: #fff;
+  border: none;
+
+  padding: 14px;
+  border-radius: 10px;
+
+  font-size: 16px;
+  font-weight: bold;
+
+  cursor: pointer;
+  width: 100%;
+}
+
+/* =====================
+   Mobile (MAIN FIX)
+===================== */
+
+@media (max-width: 600px) {
+  .cart-drawer {
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+
+    width: 100%;
+    max-width: 100%;
+
+    height: 100%;
+    min-height: 100%;
+
+    border-radius: 0;
+  }
+
+  .cart-footer {
+    padding-bottom: 12px; /* closer to bottom */
+  }
+}

@@ -1,0 +1,282 @@
+.signin-page {
+  width: 100%;
+  min-height: 100dvh;
+}
+
+.signin-bg {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #487bff 0%, #8f68ff 55%, #fc72ff 100%);
+}
+
+.signin-card {
+  width: 100%;
+  max-width: 760px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.signin-brand-strip {
+  height: 8px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    #fc72ff,
+    #8f68ff,
+    #487bff,
+    #8f68ff,
+    #fc72ff
+  );
+}
+
+.signin-body {
+  padding: 2.3rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.signin-header {
+  text-align: center;
+}
+
+.signin-title {
+  margin: 0 0 0.7rem;
+  font-size: 2.5rem;
+  line-height: 1.08;
+  font-weight: 800;
+  color: #111;
+}
+
+.signin-subtitle {
+  margin: 0 auto;
+  max-width: 620px;
+  font-size: 1.08rem;
+  line-height: 1.45;
+  color: #555;
+}
+
+.signin-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.google-btn {
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 1rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  color: #222;
+  font-size: 1.02rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.google-btn:hover {
+  background: #fafafa;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+}
+
+.google-btn:active {
+  transform: translateY(0);
+}
+
+.google-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* Guest button */
+.guest-btn {
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 0.95rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid #ccc;
+  background: transparent;
+  color: #222;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, background 0.2s ease, border 0.2s ease;
+}
+
+.guest-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.signin-note {
+  margin: 0;
+  max-width: 500px;
+  text-align: center;
+  font-size: 0.97rem;
+  line-height: 1.45;
+  color: #666;
+}
+
+@media (max-width: 900px) {
+  .signin-bg {
+    padding: 18px;
+  }
+
+  .signin-card {
+    max-width: 680px;
+    border-radius: 20px;
+  }
+
+  .signin-body {
+    padding: 2rem 1.5rem 1.6rem;
+  }
+
+  .signin-title {
+    font-size: 2.15rem;
+  }
+
+  .signin-subtitle {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .signin-page,
+  .signin-bg {
+    min-height: 100dvh;
+  }
+
+  .signin-bg {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .signin-card {
+    max-width: 100%;
+    width: 100%;
+    min-height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.10) 0%,
+        rgba(255, 255, 255, 0.18) 100%
+      ),
+      linear-gradient(135deg, #487bff 0%, #8f68ff 55%, #fc72ff 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .signin-brand-strip {
+    display: none;
+  }
+
+  .signin-body {
+    width: 100%;
+    max-width: 100%;
+    padding: 2rem 1.1rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.35rem;
+    margin: auto 0;
+  }
+
+  .signin-header {
+    text-align: center;
+  }
+
+  .signin-title {
+    margin: 0 0 0.7rem;
+    font-size: 2rem;
+    line-height: 1.08;
+    color: #fff;
+    text-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
+  }
+
+  .signin-subtitle {
+    max-width: 100%;
+    font-size: 1rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .signin-content {
+    width: 100%;
+    gap: 1rem;
+  }
+
+  .google-btn {
+    max-width: 100%;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.96);
+    color: #222;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    font-size: 1rem;
+  }
+
+  .signin-note {
+    max-width: 100%;
+    font-size: 0.94rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+@media (max-width: 420px) {
+  .signin-body {
+    padding: 1.8rem 1rem;
+    gap: 1.15rem;
+  }
+
+  .signin-title {
+    font-size: 1.72rem;
+  }
+
+  .signin-subtitle {
+    font-size: 0.96rem;
+  }
+
+  .google-btn {
+    padding: 0.95rem;
+    font-size: 0.96rem;
+  }
+
+  .google-icon {
+    font-size: 20px;
+  }
+
+  .signin-note {
+    font-size: 0.9rem;
+  }
+}

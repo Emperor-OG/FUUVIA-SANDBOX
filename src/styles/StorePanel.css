@@ -1,0 +1,91 @@
+.store-panel {
+    background-color: var(--primary-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Store images container */
+.store-images {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Banner image */
+#store-banner {
+  width: 100%;
+  height: 500px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex: 1 1 60%;
+  background-color: var(--primary-bg);
+}
+
+/* Logo image */
+#store-logo {
+    position: absolute;
+    top: 440px;
+    left: 85px;
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid blueviolet;
+    flex-shrink: 0;
+}
+
+/* Store details */
+.store-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #555;
+  margin-top: 100px;
+}
+
+.store-details p {
+  margin: 0;
+}
+
+/* Store actions */
+.store-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.store-actions button {
+  padding: 0.5rem 1rem;
+  background-color: #0077ff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.store-actions button:hover {
+  background-color: #005fcc;
+  transform: translateY(-2px);
+}
+
+.store-actions button:active {
+  transform: translateY(0);
+}
+
+.store-name-detail {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+

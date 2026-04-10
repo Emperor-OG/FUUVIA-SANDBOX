@@ -1,0 +1,109 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content.large {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.location-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+.location-table th, .location-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+.location-table td[contenteditable="true"] {
+  background: #fafafa;
+}
+
+.add-location-form input {
+  margin: 4px;
+  padding: 6px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content.large {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.location-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+.location-table th, .location-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+.location-table td[contenteditable="true"] {
+  background: #fafafa;
+}
+
+.add-location-form input {
+  margin: 4px;
+  padding: 6px;
+}
+
+.close-dropoff-btn {
+  position: absolute;
+  background: none;
+  border: none;
+  right: 16px;
+  top: 12px;
+  font-size: 26px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.close-dropoff-btn:hover {
+  color: #ff4b5c;
+  transform: scale(1.1);
+}
+
+.delete-dropoff-loc {
+  background: none;
+  color: var(--text);
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.delete-dropoff-loc:hover {
+  color: #ff4b5c;
+  transform: scale(1.1);
+}

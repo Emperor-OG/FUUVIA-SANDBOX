@@ -1,0 +1,192 @@
+/* Store card */
+.store-card {
+  height: 290px; /* fixed height matching add-store */
+  background-color: var(--storecard-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative; /* positioning context for logo */
+}
+
+.store-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+/* Banner */
+.store-banner {
+  width: 100%;
+  height: 210px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  border-bottom: 1px solid silver;
+}
+
+/* Logo */
+.store-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid blueviolet;
+  position: absolute;
+  top: 60%;
+  bottom: 12px;
+  left: 10px;
+  background: #fff;
+  object-fit: cover;
+}
+
+.store-name {
+  position: absolute;
+  color: var(--storecard-txt);
+  top: 82%;
+  left: 10px;
+}
+
+.store-location {
+  position: absolute;
+  color: var(--storecard-txt);
+  top: 93%;
+  left: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.store-number {
+  position: absolute;
+  top: 212px;
+  right: 10px;
+  font-size: 0.9rem;
+  background-color: var(--store-number-bg);
+  color: var(--store-number-color);
+  border-radius: 50%;      /* makes it circular */
+  border: 1px solid var(--store-number-border);
+  width: 25px;             /* circle width */
+  height: 25px;            /* circle height */
+  display: flex;           /* for centering text */
+  align-items: center;     /* vertical center */
+  justify-content: center; /* horizontal center */
+  margin: 0;
+  font-weight: bold;
+}
+
+/* Store info */
+.store-info {
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5px 12px;
+  padding-left: 80px; /* space for logo */
+  box-sizing: border-box;
+}
+
+.store-info h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.store-info p {
+  font-size: 13px;
+  margin: 2px 0 0 0;
+  line-height: 1.2;
+}
+
+/* Favourite Heart Button */
+.favourite-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: grey; /* rgba(255, 255, 255, 0.85); */
+  border: none;
+  border-radius: 50%;
+  padding: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.favourite-btn:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 1);
+}
+
+.favourite-btn i {
+  color: pink;
+}
+
+.favourite-btn.favourited i {
+  color: #e0245e; /* red for favourited */
+}
+
+.store-status.open {
+  color: #16a34a;
+  background-color: rgba(22, 163, 74, 0.25); /* increased opacity */
+  border: 1px solid rgba(22, 163, 74, 0.4);   /* slightly stronger border */
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.store-status.closed {
+  color: #dc2626;
+  background-color: rgba(220, 38, 38, 0.25);  /* increased opacity */
+  border: 1px solid rgba(220, 38, 38, 0.35); /* slightly stronger border */
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Position the status pill in the top-left corner of the banner */
+.store-status-pill-wrapper {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .store-card {
+    height: 275px;
+    border-radius: 0px;
+  }
+
+  .store-banner {
+    width: 100%;
+    height: 182px;
+  }
+
+  .store-logo {
+    position: absolute;
+    width: 60px;        /* relative to the card width */
+    height: 60px;
+    top: 152px;
+    border-radius: 50%;
+  }
+
+  .store-info {
+    margin-top: 30px;
+  }
+
+  .store-name {
+    top: 80%;
+  }
+
+  .store-number {
+    top: 185px;
+    right: 5px;
+  }
+}

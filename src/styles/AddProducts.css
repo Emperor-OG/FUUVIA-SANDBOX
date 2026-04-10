@@ -1,0 +1,180 @@
+/* ------------------------- */
+/* MODAL OVERLAY & BOX       */
+/* ------------------------- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 50px;
+  z-index: 999;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 700px;
+  padding: 20px 30px;
+  position: relative;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* ------------------------- */
+/* MODAL CLOSE BUTTON        */
+/* ------------------------- */
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: #333;
+  transition: color 0.2s;
+}
+
+.modal-close:hover { color: #e74c3c; }
+
+/* ------------------------- */
+/* FORM & INPUTS             */
+/* ------------------------- */
+.add-product-form { display: flex; flex-direction: column; }
+
+.add-product-form h2,
+.add-product-form h3,
+.add-product-form h4 { margin-bottom: 10px; color: #333; }
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+textarea.form-input { resize: vertical; min-height: 60px; }
+
+/* ------------------------- */
+/* VARIANT CARD              */
+/* ------------------------- */
+.variant-card {
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.final-price { font-weight: bold; color: #2c3e50; }
+.variant-stock { font-weight: bold; margin-top: 5px; color: #34495e; }
+
+/* ------------------------- */
+/* SKU ROW                   */
+/* ------------------------- */
+.sku-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+/* ------------------------- */
+/* BUTTONS                   */
+/* ------------------------- */
+.add-btn,
+.remove-btn,
+.submit-btn {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.add-btn { background-color: #2ecc71; color: #fff; margin-top: 5px; }
+.add-btn:hover { background-color: #27ae60; }
+
+.remove-btn { background-color: #e74c3c; color: #fff; }
+.remove-btn:hover { background-color: #c0392b; }
+
+.submit-btn { background-color: #3498db; color: #fff; margin-top: 15px; }
+.submit-btn:disabled { background-color: #95a5a6; cursor: not-allowed; }
+.submit-btn:hover:not(:disabled) { background-color: #2980b9; }
+
+/* ===================== */
+/* ADD IMAGE CARD         */
+/* ===================== */
+.add-image-card {
+  width: 180px;
+  height: 180px;
+  border: 2px dashed skyblue;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--bg);
+  transition: all 0.3s ease;
+}
+
+.add-image-card:hover { background-color: #f3f4f6; border-color: #2563eb; }
+
+/* Placeholder text */
+.add-image-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  color: skyblue;
+  font-weight: 500;
+  font-size: 16px;
+  text-align: center;
+}
+
+/* Image fills entire card */
+.image-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* fill without distortion */
+  border-radius: 12px;
+  z-index: 0;
+}
+
+/* ------------------------- */
+/* HEADINGS                  */
+/* ------------------------- */
+.add-product-form h2 { font-size: 1.5rem; margin-bottom: 15px; }
+.add-product-form h3 { font-size: 1.2rem; margin-top: 15px; }
+.add-product-form h4 { font-size: 1rem; margin-bottom: 8px; }
+
+/* ------------------------- */
+/* RESPONSIVE                */
+/* ------------------------- */
+@media (max-width: 600px) {
+  .modal { width: 95%; padding: 15px 20px; }
+
+  .sku-row { flex-direction: column; }
+  .add-btn, .remove-btn, .submit-btn { width: 100%; }
+
+  .add-image-card { width: 140px; height: 140px; }
+}

@@ -1,0 +1,188 @@
+/* Overlay & Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--primary-bg);
+  color: var(--text);
+  padding: 24px 32px;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Close button */
+.close-delivery-btn {
+  position: absolute;
+  background: none;
+  border: none;
+  right: 16px;
+  top: 12px;
+  font-size: 26px;
+  cursor: pointer;
+  color: var(--text);
+}
+.close-delivery-btn:hover {
+  color: red;
+}
+
+/* Nationwide row */
+.nationwide-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.nationwide-row input[type="checkbox"] {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+.nationwide-row input[type="number"],
+.nationwide-row input[type="text"] {
+  width: 100px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: var(--searchbar-bg);
+}
+
+/* Province cards */
+.province-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: var(--secondary-bg);
+}
+
+.province-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.province-header input[type="number"],
+.province-header input[type="text"] {
+  width: 80px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: var(--searchbar-bg);
+}
+
+/* Cities dropdown */
+.cities-dropdown {
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.city-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.city-row input[type="number"],
+.city-row input[type="text"] {
+  width: 70px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: var(--searchbar-bg);
+}
+
+/* Table styling */
+.delivery-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.delivery-table th,
+.delivery-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+/* Editable table cells */
+.delivery-table td[contenteditable]:focus {
+  outline: 2px solid #4caf50;
+  background: var(--searchbar-bg);
+}
+
+/* Modal actions */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.save-btn,
+.cancel-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+
+.save-btn {
+  background: #4caf50;
+  color: white;
+}
+
+.cancel-btn {
+  background: #f0f0f0; /* lighter gray */
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.save-btn:hover {
+  background: #45a049;
+}
+
+.cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+/* Delete button */
+.delete-delivery-loc {
+  background: none;
+  color: var(--text);
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.delete-delivery-loc:hover {
+  color: #ff4b5c;
+  transform: scale(1.1);
+}

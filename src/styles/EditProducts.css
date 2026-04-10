@@ -1,0 +1,249 @@
+/* MODAL OVERLAY */
+.add-product-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* MODAL BOX */
+.add-product-modal {
+  background: #ffffff;
+  width: 700px;
+  max-width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+  position: relative;
+}
+
+/* CLOSE BUTTON */
+.modal-close-btn {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  font-size: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #666;
+}
+
+.modal-close-btn:hover {
+  color: #000;
+}
+
+/* HEADINGS */
+.add-product-modal h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.add-product-modal h3 {
+  margin-top: 25px;
+  margin-bottom: 10px;
+  font-size: 18px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+}
+
+/* FORM */
+.add-product-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* INPUTS */
+.add-product-modal input,
+.add-product-modal select,
+.add-product-modal textarea {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.add-product-modal input:focus,
+.add-product-modal select:focus,
+.add-product-modal textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* IMAGE PREVIEW GRID */
+.preview-container {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.image-preview-wrapper {
+  position: relative;
+}
+
+.image-preview {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+/* REMOVE IMAGE BUTTON */
+.remove-img-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* VARIANT BLOCK */
+.variant-block {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 12px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* VARIANT IMAGE PREVIEW */
+.variant-preview {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+/* EXISTING VARIANT IMAGE */
+.existing-variant-img {
+  position: relative;
+  width: 80px;
+}
+
+.existing-variant-img img {
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.existing-variant-img button {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+/* MARKUP PRICE DISPLAY */
+.variant-markup-display {
+  background: #f1f5f9;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ADD VARIANT BUTTON */
+.add-variant-btn {
+  margin-top: 10px;
+  padding: 10px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.add-variant-btn:hover {
+  background: #16a34a;
+}
+
+/* REMOVE VARIANT BUTTON */
+.remove-variant-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.remove-variant-btn:hover {
+  background: #dc2626;
+}
+
+/* EDIT PRODUCT BUTTONS */
+.edit-product-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* UPDATE BUTTON */
+.edit-product-buttons button[type="submit"] {
+  flex: 1;
+  background: #3b82f6;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.edit-product-buttons button[type="submit"]:hover {
+  background: #2563eb;
+}
+
+/* DELETE BUTTON */
+.delete-prod {
+  flex: 1;
+  background: #ef4444;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+
+.delete-prod:hover {
+  background: #dc2626;
+}
+
+/* SCROLLBAR */
+.add-product-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.add-product-modal::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 6px;
+}

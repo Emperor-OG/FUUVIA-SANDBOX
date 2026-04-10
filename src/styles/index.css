@@ -1,0 +1,164 @@
+/* ===================== */
+/* Light Theme (default) */
+/* ===================== */
+:root {
+  --primary-bg: #ffffff;
+  --secondary-bg: #f4f4f4;
+
+  --side-menu-bg: #ffffff;
+  --side-menu-text: #222;
+  --side-menu-border: #ccc;
+
+  --side-menu-hover-bg: #e9f3ff;
+  --side-menu-hover-text: #007bff;
+
+  --side-menu-close-bg: #000;
+  --side-menu-close-text: #fff;
+  --side-menu-close-hover-bg: #333;
+  --side-menu-close-hover-text: red;
+
+  --logout-bg: #fff;
+  --logout-text: green;
+  --logout-border: green;
+
+  --logout-hover-bg: rgba(255, 0, 0, 0.07);
+  --logout-hover-text: red;
+  --logout-hover-border: red;
+
+  --overlay-bg: rgba(0, 0, 0, 0.35);
+
+  --bg: var(--primary-bg);
+  --text: #000000;
+
+  --searchbar-bg: rgba(255, 255, 255, 0.331);
+  --searchbar-txt: #000;
+
+  --storecard-bg: #fff;
+  --storecard-txt: #000;
+  --storecard-banner-border: silver;
+  --store-number-bg: #000;
+  --store-number-color: #fff;
+  --store-number-border: #000;
+
+  --variant-box: #fff;
+}
+
+/* ===================== */
+/* Dark Theme            */
+/* ===================== */
+[data-theme="dark"] {
+  --primary-bg: #121212;
+  --secondary-bg: #1e1e1e;
+
+  --side-menu-bg: #1b1b1b;
+  --side-menu-text: #f4f4f4;
+  --side-menu-border: #555;
+
+  --side-menu-hover-bg: #242424;
+  --side-menu-hover-text: #4aa3ff;
+
+  --side-menu-close-bg: #333;
+  --side-menu-close-text: #fff;
+  --side-menu-close-hover-bg: #555;
+  --side-menu-close-hover-text: #ff5b5b;
+
+  --logout-bg: #1b1b1b;
+  --logout-text: #4caf50;
+  --logout-border: #4caf50;
+
+  --logout-hover-bg: rgba(255, 80, 80, 0.12);
+  --logout-hover-text: #ff5b5b;
+  --logout-hover-border: #ff5b5b;
+
+  --overlay-bg: rgba(0, 0, 0, 0.55);
+
+  --bg: var(--primary-bg);
+  --text: #ffffff;
+
+  --searchbar-bg: rgba(128, 128, 128, 0.331);
+  --searchbar-txt: #fff;
+
+  --storecard-bg: #000;
+  --storecard-txt: #fff;
+  --storecard-banner-border: silver;
+  --store-number-bg: #fff;
+  --store-number-color: #000;
+  --store-number-border: #000;
+
+  --variant-box: #111;
+}
+
+/* ===================== */
+/* GLOBAL PAGE STYLING   */
+/* ===================== */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+html,
+body,
+#root {
+  overflow-x: hidden !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html.light {
+  --bg: var(--primary-bg);
+  --text: #000;
+}
+
+html.dark {
+  --bg: var(--primary-bg);
+  --text: #fff;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
+  font-family: "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img,
+video,
+iframe {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

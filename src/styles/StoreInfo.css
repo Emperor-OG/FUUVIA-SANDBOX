@@ -1,0 +1,378 @@
+/* =====================
+   Root / Overlay
+===================== */
+
+.storeinfo-root {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: auto;
+}
+
+.storeinfo-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+/* =====================
+   Shell
+===================== */
+
+.storeinfo-shell {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 92%;
+  max-width: 760px;
+  max-height: 88dvh;
+  transform: translate(-50%, -50%);
+  background: var(--primary-bg, #fff);
+  color: var(--text, #000);
+  border-radius: 16px;
+  padding: 20px 24px 18px;
+  box-sizing: border-box;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* =====================
+   Header
+===================== */
+
+.storeinfo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.storeinfo-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.storeinfo-close-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.storeinfo-close-btn:hover {
+  color: red;
+}
+
+/* =====================
+   Tabs
+===================== */
+
+.storeinfo-tabs-section {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 14px;
+  flex-shrink: 0;
+}
+
+.storeinfo-tabs-section button {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: skyblue;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.storeinfo-tabs-section .active {
+  background: #0b6cfb;
+  color: #fff;
+  border-color: #0b6cfb;
+}
+
+/* =====================
+   Body
+===================== */
+
+.storeinfo-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.storeinfo-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.storeinfo-body::-webkit-scrollbar-thumb {
+  background: #b7b7b7;
+  border-radius: 6px;
+}
+
+/* =====================
+   Tables
+===================== */
+
+.storeinfo-table-section {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.storeinfo-table-section th {
+  background: #f8f8f8;
+  padding: 12px;
+  font-weight: 600;
+  border-bottom: 2px solid #ddd;
+  text-align: left;
+}
+
+.storeinfo-table-section td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* =====================
+   Delivery View
+===================== */
+
+.delivery-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.province-card {
+  border: 1px solid #e2e2e2;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--primary-bg, #fff);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.province-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.city-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.city-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 110px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.02);
+  gap: 8px;
+}
+
+.city-name {
+  font-weight: 500;
+}
+
+.city-fee {
+  text-align: right;
+  font-weight: 600;
+  color: #0b6cfb;
+}
+
+.city-est {
+  text-align: right;
+  color: #666;
+}
+
+/* =====================
+   Nationwide
+===================== */
+
+.nationwide-display {
+  border: 1px solid #0b6cfb;
+  background: rgba(11, 108, 251, 0.06);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nationwide-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.nationwide-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 6px;
+}
+
+/* =====================
+   Empty State
+===================== */
+
+.empty-state {
+  text-align: center;
+  padding: 18px;
+  border: 1px dashed #ccc;
+  border-radius: 10px;
+  color: #777;
+}
+
+/* =====================
+   Mobile
+===================== */
+
+@media (max-width: 600px) {
+  .storeinfo-shell {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    height: 100%;
+    transform: none;
+    border-radius: 0;
+    padding: 18px 16px 14px;
+    box-shadow: none;
+  }
+
+  .storeinfo-header {
+    align-items: flex-start;
+  }
+
+  .storeinfo-header h2 {
+    font-size: 1.15rem;
+    padding-right: 8px;
+  }
+
+  .storeinfo-tabs-section {
+    gap: 6px;
+    margin: 12px 0;
+  }
+
+  .storeinfo-tabs-section button {
+    padding: 7px 6px;
+    font-size: 0.74rem;
+    gap: 4px;
+  }
+
+  .storeinfo-tabs-section button span {
+    min-width: 0;
+  }
+
+  .storeinfo-body {
+    padding-right: 0;
+    padding-bottom: 10px;
+  }
+
+  .storeinfo-table-section thead {
+    display: none;
+  }
+
+  .storeinfo-table-section,
+  .storeinfo-table-section tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .storeinfo-table-section tr {
+    display: block;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: var(--primary-bg, #fff);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .storeinfo-table-section td {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 8px;
+    font-size: 0.85rem;
+    border: none;
+  }
+
+  .storeinfo-table-section td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #555;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .city-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 8px 10px;
+  }
+
+  .city-fee::before {
+    content: "Fee: ";
+    font-weight: 500;
+    color: #555;
+  }
+
+  .city-est::before {
+    content: "ETA: ";
+    font-weight: 500;
+    color: #555;
+  }
+
+  .city-fee,
+  .city-est {
+    text-align: left;
+    font-size: 0.85rem;
+    display: block;
+  }
+
+  .nationwide-meta {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

@@ -1,0 +1,143 @@
+/* ===== HEADER ===== */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: var(--primary-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+  color: var(--text);
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--text);
+  overflow: visible;
+}
+
+/* ===== LOGO AREA ===== */
+.LogoCon {
+  height: 57px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 2px solid #fc72ff;
+  border-left: 2px solid #fc72ff;
+  border-right: 2px solid blueviolet;
+  border-bottom: 2px solid #8f68ff;
+}
+
+.logo {
+  background: linear-gradient(
+    to right,
+    #fc72ff,
+    #8f68ff,
+    #487bff,
+    #8f68ff,
+    #fc72ff
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 24px;
+  font-weight: bold;
+  transition: 0.2s ease;
+}
+
+.logo:hover {
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
+/* ===== HEADER BUTTONS ===== */
+.header-buttons {
+  display: flex;
+  margin-right: 15px;
+}
+
+.menu-btn {
+  font-size: 20px;
+  cursor: pointer;
+  padding: 10px;
+  background: transparent;
+  color: var(--text);
+  border-radius: 50%;
+  border: none;
+  font-weight: bold;
+  transition: 0.2s ease;
+}
+
+.menu-btn:hover {
+  color: skyblue;
+  transform: scale(1.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* ===== SIGN-IN TAB ===== */
+.header-signin-tab {
+  position: absolute;
+  right: 14px;
+  top: 60px;
+  z-index: 1001;
+
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px 9px;
+  min-height: 26px;
+
+  border-radius: 0 0 8px 8px;
+
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+
+  cursor: pointer;
+  box-shadow: 0 5px 12px rgba(37, 99, 235, 0.22);
+
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.header-signin-tab:hover {
+  transform: translateY(1px);
+  box-shadow: 0 7px 14px rgba(37, 99, 235, 0.28);
+}
+
+.header-signin-tab i {
+  font-size: 0.85rem;
+}
+
+.header-signin-tab span {
+  white-space: nowrap;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  header {
+    justify-content: center;
+  }
+
+  .header-buttons {
+    position: absolute;
+    right: 15px;
+  }
+
+  .header-signin-tab {
+    right: 8px;
+    top: 60px;
+    padding: 4px 7px;
+    min-height: 24px;
+    font-size: 0.68rem;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .header-signin-tab i {
+    font-size: 0.8rem;
+  }
+}

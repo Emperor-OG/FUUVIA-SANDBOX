@@ -1,0 +1,117 @@
+/* ======================= */
+/* GLOBAL SAFETY FIX       */
+/* ======================= */
+html, body {
+  overflow-x: hidden;
+}
+
+/* ======================= */
+/* CONTACT PAGE WRAPPER    */
+/* ======================= */
+
+.contact-page {
+  position: absolute;
+  top: 60px;
+  background: var(--secondary-bg);
+  color: var(--text);
+  min-height: 100vh;
+  width: 100%;
+  right: 0;
+  left: 0;
+  padding-bottom: 3rem;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* ======================= */
+/* MAIN CONTENT AREA       */
+/* ======================= */
+
+.contact-content {
+  padding: 2rem 3rem;
+}
+
+/* ======================= */
+/* CONTENT SECTIONS        */
+/* ======================= */
+
+.section {
+  background: var(--secondary-bg);
+  margin: 2rem 0;
+  padding: 2rem;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  opacity: 0;
+  transform: translateY(30px);
+  animation: slideUp 0.6s ease forwards;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Alternating backgrounds like AboutUs + Terms */
+.section:nth-of-type(odd) {
+  padding-left: 5%;
+  padding-right: 5%;
+  background: var(--secondary-bg);
+}
+
+.section:nth-of-type(even) {
+  padding-left: 10%;
+  padding-right: 10%;
+  background: var(--primary-bg);
+}
+
+.section h1 {
+  margin-bottom: 1rem;
+  font-size: 2.4rem;
+  font-weight: 800;
+}
+
+.section p,
+.section li {
+  line-height: 1.6;
+  font-size: 1rem;
+  opacity: 0.95;
+}
+
+.section a {
+  color: #4c8dff;
+}
+
+/* ======================= */
+/* ANIMATIONS              */
+/* ======================= */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0px); }
+}
+
+/* ======================= */
+/* RESPONSIVE FIXES        */
+/* ======================= */
+
+@media (max-width: 900px) {
+
+  .contact-page {
+    width: 100%;
+    right: 0;
+    position: relative;
+    top: 0;
+    padding-top: 80px;
+  }
+
+  .section:nth-of-type(odd),
+  .section:nth-of-type(even) {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .section {
+    text-align: center;
+  }
+}
