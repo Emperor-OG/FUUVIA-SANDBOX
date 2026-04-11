@@ -1,5 +1,5 @@
 // src/components/ProductLibrary.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "../styles/ProductLibrary.css";
 
 export default function ProductLibrary({ products = [], onEditProduct }) {
@@ -7,8 +7,9 @@ export default function ProductLibrary({ products = [], onEditProduct }) {
     console.log("ProductLibrary received products:", products);
   }, [products]);
 
-  if (!products || products.length === 0)
+  if (!products || products.length === 0) {
     return <p className="no-products">No products available at this store.</p>;
+  }
 
   return (
     <div className="product-library">
@@ -30,55 +31,68 @@ function ProductCard({ product, onEditProduct }) {
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef(null);
 
-  // ---------- Images ----------
-  const mainImages = Array.isArray(product.images)
-    ? product.images
-    : product.images
-    ? [product.images]
-    : [];
+  const mainImages = useMemo(() => {
+    if (Array.isArray(product.images)) return product.images.filter(Boolean);
+    if (product.images) return [product.images];
+    return [];
+  }, [product.images]);
 
-  const variantImages = Array.isArray(product.variants)
-    ? product.variants.map((v) => v.image).filter(Boolean)
-    : [];
+  const variantImages = useMemo(() => {
+    if (!Array.isArray(product.variants)) return [];
+    return product.variants.map((v) => v.image).filter(Boolean);
+  }, [product.variants]);
 
-  const allImages = [...mainImages, ...variantImages];
+  const allImages = useMemo(() => {
+    return [...mainImages, ...variantImages].filter(Boolean);
+  }, [mainImages, variantImages]);
 
   useEffect(() => {
-    if (allImages.length <= 1 || isPaused) return;
+    setCurrentIndex(0);
+  }, [product?.id]);
+
+  useEffect(() => {
+    if (allImages.length <= 1 || isPaused) return undefined;
 
     intervalRef.current = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % allImages.length);
     }, 3000);
 
-    return () => clearInterval(intervalRef.current);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [allImages.length, isPaused]);
 
-  // ---------- Pricing ----------
   const firstVariant = product?.variants?.[0] || {};
-  const basePrice =
-    parseFloat(firstVariant.seller_price || product.base_price) || 0;
 
-  const markupPrice =
-    parseFloat(firstVariant.markup_price) ||
-    basePrice + basePrice * ((firstVariant.markup_percentage || 10) / 100);
+  const basePrice = Number(firstVariant.seller_price || product.base_price || 0);
 
-  const finalMarkup = markupPrice.toFixed(2);
+  const markupPrice = Number(
+    firstVariant.markup_price ||
+      product.markup_price ||
+      (basePrice +
+        basePrice * ((Number(firstVariant.markup_percentage) || 10) / 100))
+  );
 
-  // ---------- Stock ----------
+  const finalPrice = Number(
+    firstVariant.price ??
+      product.price ??
+      product.final_price ??
+      (markupPrice + Number(product.affiliate_markup || 0))
+  );
+
   const totalStock =
-    product.total_stock ||
-    product.stock ||
+    Number(product.total_stock) ||
+    Number(product.stock) ||
     product.variants?.reduce(
       (sum, v) =>
         sum +
         (Array.isArray(v.skus)
-          ? v.skus.reduce((skuSum, sku) => skuSum + (sku.stock || 0), 0)
-          : v.stock || 0),
+          ? v.skus.reduce((skuSum, sku) => skuSum + Number(sku.stock || 0), 0)
+          : Number(v.stock || 0)),
       0
     ) ||
     0;
 
-  // ---------- Dots for 1-3 images logic ----------
   const getDots = () => {
     if (allImages.length <= 1) return [];
     return [0, 1, 2].filter((i) => i < allImages.length);
@@ -86,14 +100,12 @@ function ProductCard({ product, onEditProduct }) {
 
   const mapDotToImageIndex = (dotIndex) => {
     if (allImages.length <= 3) return dotIndex;
-    // cycle every 3 dots
     const cycle = Math.floor(currentIndex / 3);
     return (dotIndex + cycle * 3) % allImages.length;
   };
 
   return (
     <div className="product-card">
-      {/* ---------- Images ---------- */}
       {allImages.length > 0 && (
         <div
           className="image-slideshow"
@@ -106,35 +118,31 @@ function ProductCard({ product, onEditProduct }) {
             className="slide-image"
           />
 
-          {/* Dots */}
           {allImages.length > 1 && (
             <div className="slide-dots">
               {getDots().map((dot) => (
                 <span
                   key={dot}
-                  className={`dot ${
-                    currentIndex % 3 === dot ? "active" : ""
-                  }`}
+                  className={`dot ${currentIndex % 3 === dot ? "active" : ""}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     setCurrentIndex(mapDotToImageIndex(dot));
                   }}
-                ></span>
+                />
               ))}
             </div>
           )}
         </div>
       )}
 
-      {/* ---------- Product Info ---------- */}
       <h3 className="product-name">{product.name}</h3>
 
       <p>
-        Final Selling Price: <strong>R{finalMarkup}</strong>
+        Final Selling Price: <strong>R{finalPrice.toFixed(2)}</strong>
       </p>
 
       <p>
-        Seller's Asking Price: <strong>R{basePrice.toFixed(2)}</strong>
+        Seller&apos;s Asking Price: <strong>R{basePrice.toFixed(2)}</strong>
       </p>
 
       <p>
