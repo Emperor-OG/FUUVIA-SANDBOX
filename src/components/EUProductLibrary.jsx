@@ -1,13 +1,17 @@
-// src/components/EUProductLibrary.jsx
-import React, { useEffect, useState, useRef } from "react";
+// src/components/EUProductsLibrary.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "../styles/EUProductLibrary.css";
 
-export default function EUProductLibrary({ products = [], onProductClick, onAddToCart }) {
-  useEffect(() => {
-  }, [products]);
+export default function EUProductLibrary({
+  products = [],
+  onProductClick,
+  onAddToCart,
+}) {
+  useEffect(() => {}, [products]);
 
-  if (!products || products.length === 0)
+  if (!products || products.length === 0) {
     return <p className="no-products">No products available at this store.</p>;
+  }
 
   return (
     <div className="eu-product-library">
@@ -30,49 +34,59 @@ function EUProductCard({ product, onProductClick, onAddToCart }) {
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef(null);
 
-  // ---------- Image Handling ----------
-  const mainImages = Array.isArray(product.images)
-    ? product.images
-    : product.images
-    ? [product.images]
-    : [];
+  const mainImages = useMemo(() => {
+    if (Array.isArray(product.images)) return product.images.filter(Boolean);
+    if (product.images) return [product.images];
+    return [];
+  }, [product.images]);
 
-  const variantImages = Array.isArray(product.variant_images)
-    ? product.variant_images
-    : product.variant_images
-    ? [product.variant_images]
-    : [];
+  const variantImages = useMemo(() => {
+    if (Array.isArray(product.variant_images)) {
+      return product.variant_images.filter(Boolean);
+    }
+    if (product.variant_images) return [product.variant_images];
+    return [];
+  }, [product.variant_images]);
 
-  const allImages = [...mainImages, ...variantImages];
+  const allImages = useMemo(() => {
+    return [...mainImages, ...variantImages].filter(Boolean);
+  }, [mainImages, variantImages]);
 
-  // ---------- Slideshow ----------
   useEffect(() => {
-    if (allImages.length <= 1 || isPaused) return;
+    setCurrentIndex(0);
+  }, [product?.id]);
+
+  useEffect(() => {
+    if (allImages.length <= 1 || isPaused) return undefined;
 
     intervalRef.current = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % allImages.length);
     }, 5000);
 
-    return () => clearInterval(intervalRef.current);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [allImages.length, isPaused]);
 
-  // ---------- Pricing ----------
-  const basePrice = parseFloat(product.base_price || product.seller_price) || 0;
+  const basePrice = Number(product.base_price || product.seller_price || 0);
 
-  const markupPrice =
-    parseFloat(product.markup_price) ||
-    basePrice + basePrice * ((product.markup_percentage || 10) / 100);
+  const markupPrice = Number(
+    product.markup_price ||
+      (basePrice + basePrice * ((Number(product.markup_percentage) || 10) / 100))
+  );
 
-  const finalMarkup = markupPrice.toFixed(2);
+  const finalPrice = Number(
+    product.price ??
+      product.final_price ??
+      (markupPrice + Number(product.affiliate_markup || 0))
+  );
 
-  // ---------- Stock ----------
   const stock =
-    product.stock ||
-    product.total_stock ||
-    product.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) ||
+    Number(product.stock) ||
+    Number(product.total_stock) ||
+    product.variants?.reduce((sum, v) => sum + Number(v.stock || 0), 0) ||
     0;
 
-  // ---------- Dots logic ----------
   const getDots = () => {
     if (allImages.length <= 1) return [];
     return [0, 1, 2].filter((i) => i < allImages.length);
@@ -86,7 +100,6 @@ function EUProductCard({ product, onProductClick, onAddToCart }) {
 
   return (
     <div className="eu-product-card" onClick={() => onProductClick?.(product)}>
-      {/* ---------- Image Slideshow ---------- */}
       {allImages.length > 0 && (
         <div
           className="eu-image-slideshow"
@@ -99,7 +112,6 @@ function EUProductCard({ product, onProductClick, onAddToCart }) {
             className="eu-slide-image"
           />
 
-          {/* Dots */}
           {allImages.length > 1 && (
             <div className="eu-slide-dots">
               {getDots().map((dot) => (
@@ -112,19 +124,18 @@ function EUProductCard({ product, onProductClick, onAddToCart }) {
                     e.stopPropagation();
                     setCurrentIndex(mapDotToImageIndex(dot));
                   }}
-                ></span>
+                />
               ))}
             </div>
           )}
         </div>
       )}
 
-      {/* ---------- Product Info ---------- */}
       <div className="eu-product-info">
         <h3 className="eu-product-name">{product.name}</h3>
 
         <p>
-          <strong>Price:</strong> R{finalMarkup}
+          <strong>Price:</strong> R{finalPrice.toFixed(2)}
         </p>
 
         <p>
@@ -132,8 +143,6 @@ function EUProductCard({ product, onProductClick, onAddToCart }) {
         </p>
       </div>
 
-      {/* ---------- Add to Cart (optional) ---------- */}
-      {/* Uncomment if needed */}
       {/*
       <button
         id="Add-to-cart-btn"
