@@ -2,6 +2,11 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 const fetch = require("node-fetch");
+const {
+  AFFILIATE_MARKUP,
+  getFinalPrice,
+  roundCurrency,
+} = require("../config/pricing");
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const PLATFORM_PERCENTAGE = parseFloat(process.env.PLATFORM_PERCENTAGE) || 10;
@@ -41,10 +46,172 @@ function getSafeNumber(value, fallback = 0) {
   return Number.isFinite(num) ? num : fallback;
 }
 
+async function getStore(client, storeId) {
+  const storeRes = await client.query(
+    `
+      SELECT id, subaccount_code
+      FROM stores
+      WHERE id = $1
+      LIMIT 1
+    `,
+    [storeId]
+  );
+
+  return storeRes.rows[0] || null;
+}
+
+async function getVariantsByIds(client, variantIds = []) {
+  if (!variantIds.length) return [];
+
+  const res = await client.query(
+    `
+      SELECT
+        v.id,
+        v.product_id,
+        v.name,
+        v.seller_price,
+        v.markup_price,
+        v.stock,
+        v.image_url,
+        v.markup_percent
+      FROM variants v
+      WHERE v.id = ANY($1::int[])
+    `,
+    [variantIds]
+  );
+
+  return res.rows;
+}
+
+async function getSkusForVariantIds(client, variantIds = []) {
+  if (!variantIds.length) return [];
+
+  const res = await client.query(
+    `
+      SELECT id, variant_id, size, stock
+      FROM skus
+      WHERE variant_id = ANY($1::int[])
+    `,
+    [variantIds]
+  );
+
+  return res.rows;
+}
+
+function buildSkuMap(skus = []) {
+  const map = new Map();
+
+  for (const sku of skus) {
+    if (!map.has(Number(sku.variant_id))) {
+      map.set(Number(sku.variant_id), []);
+    }
+
+    map.get(Number(sku.variant_id)).push({
+      id: Number(sku.id),
+      size: sku.size,
+      stock: Number(sku.stock || 0),
+    });
+  }
+
+  return map;
+}
+
+function buildVariantMap(variants = []) {
+  const map = new Map();
+
+  for (const variant of variants) {
+    map.set(Number(variant.id), {
+      id: Number(variant.id),
+      product_id: Number(variant.product_id),
+      name: variant.name || "",
+      seller_price: Number(variant.seller_price || 0),
+      markup_price: Number(variant.markup_price || 0),
+      stock: Number(variant.stock || 0),
+      image_url: variant.image_url || "",
+      markup_percent: Number(variant.markup_percent || 0),
+    });
+  }
+
+  return map;
+}
+
+function buildPricedOrderItems(normalizedItems, variantMap, skuMap) {
+  const pricedItems = [];
+
+  for (const item of normalizedItems) {
+    const variantId = Number(item.variant_id);
+    const skuId = item.sku_id ? Number(item.sku_id) : null;
+    const quantity = Math.max(1, Number(item.quantity || 1));
+
+    const variant = variantMap.get(variantId);
+
+    if (!variant) {
+      throw new Error(`Variant ${variantId} not found`);
+    }
+
+    const variantSkus = skuMap.get(variantId) || [];
+    const hasSkus = variantSkus.length > 0;
+
+    if (hasSkus) {
+      if (!skuId) {
+        throw new Error(`Variant ${variantId} requires a SKU`);
+      }
+
+      const sku = variantSkus.find((s) => Number(s.id) === skuId);
+
+      if (!sku) {
+        throw new Error(`SKU ${skuId} not found for variant ${variantId}`);
+      }
+
+      if (Number(sku.stock || 0) < quantity) {
+        throw new Error(`Insufficient stock for SKU ${skuId}`);
+      }
+
+      pricedItems.push({
+        product_id: item.product_id ?? variant.product_id,
+        variant_id: variant.id,
+        sku_id: sku.id,
+        name: item.name || variant.name,
+        variant: item.variant || variant.name,
+        size: item.size || sku.size || null,
+        price: getFinalPrice(variant.markup_price),
+        quantity,
+        image: item.image || variant.image_url || "",
+      });
+
+      continue;
+    }
+
+    if (skuId) {
+      throw new Error(`Variant ${variantId} does not use SKUs`);
+    }
+
+    if (Number(variant.stock || 0) < quantity) {
+      throw new Error(`Insufficient stock for variant ${variantId}`);
+    }
+
+    pricedItems.push({
+      product_id: item.product_id ?? variant.product_id,
+      variant_id: variant.id,
+      sku_id: null,
+      name: item.name || variant.name,
+      variant: item.variant || variant.name,
+      size: item.size || null,
+      price: getFinalPrice(variant.markup_price),
+      quantity,
+      image: item.image || variant.image_url || "",
+    });
+  }
+
+  return pricedItems;
+}
+
 // ------------------------
 // Initiate Payment
 // ------------------------
 router.post("/initiate", verifyUser, async (req, res) => {
+  const client = await pool.connect();
+
   try {
     if (!PAYSTACK_SECRET_KEY) {
       return res.status(500).json({ error: "Paystack secret key is missing" });
@@ -86,24 +253,17 @@ router.post("/initiate", verifyUser, async (req, res) => {
       return res.status(400).json({ error: "Invalid total" });
     }
 
-    // ------------------------
-    // Fetch Store Subaccount
-    // ------------------------
-    const storeRes = await pool.query(
-      `
-        SELECT id, subaccount_code
-        FROM stores
-        WHERE id = $1
-        LIMIT 1
-      `,
-      [storeId]
-    );
+    const variantIds = [
+      ...new Set(normalizedItems.map((item) => Number(item.variant_id)).filter(Boolean)),
+    ];
 
-    if (!storeRes.rows.length) {
+    const store = await getStore(client, storeId);
+
+    if (!store) {
       return res.status(404).json({ error: "Store not found" });
     }
 
-    const merchantSubaccount = storeRes.rows[0].subaccount_code;
+    const merchantSubaccount = store.subaccount_code;
 
     if (!merchantSubaccount) {
       return res
@@ -111,33 +271,49 @@ router.post("/initiate", verifyUser, async (req, res) => {
         .json({ error: "Store not onboarded for payments" });
     }
 
-    // ------------------------
-    // Calculate Totals
-    // ------------------------
-    const cartTotal = normalizedItems.reduce(
-      (sum, item) => sum + Number(item.price) * Number(item.quantity),
-      0
+    const variants = await getVariantsByIds(client, variantIds);
+    const variantMap = buildVariantMap(variants);
+
+    if (variantMap.size !== variantIds.length) {
+      return res.status(400).json({ error: "One or more variants were not found" });
+    }
+
+    for (const variant of variants) {
+      if (Number(variant.product_id) <= 0) {
+        return res.status(400).json({ error: "Invalid variant product relationship" });
+      }
+    }
+
+    const skus = await getSkusForVariantIds(client, variantIds);
+    const skuMap = buildSkuMap(skus);
+
+    const pricedItems = buildPricedOrderItems(normalizedItems, variantMap, skuMap);
+
+    const cartTotal = roundCurrency(
+      pricedItems.reduce(
+        (sum, item) => sum + Number(item.price) * Number(item.quantity),
+        0
+      )
     );
 
-    const safeLocationPrice = getSafeNumber(locationPrice, 0);
-    const amountInKobo = Math.round(numericTotal * 100);
-    const fuuviaCommission = numericTotal * (PLATFORM_PERCENTAGE / 100);
-
-    const expectedTotal = Number((cartTotal + safeLocationPrice).toFixed(2));
-    const roundedInputTotal = Number(numericTotal.toFixed(2));
+    const safeLocationPrice = roundCurrency(getSafeNumber(locationPrice, 0));
+    const expectedTotal = roundCurrency(cartTotal + safeLocationPrice);
+    const roundedInputTotal = roundCurrency(numericTotal);
 
     if (Math.abs(expectedTotal - roundedInputTotal) > 0.01) {
       return res.status(400).json({
-        error: "Total does not match cart total plus delivery fee",
+        error: "Total does not match server-calculated cart total plus delivery fee",
         expected_total: expectedTotal,
         received_total: roundedInputTotal,
       });
     }
 
-    // ------------------------
-    // Create Order Record
-    // ------------------------
-    const orderRes = await pool.query(
+    const amountInKobo = Math.round(roundedInputTotal * 100);
+    const fuuviaCommission = roundCurrency(
+      roundedInputTotal * (PLATFORM_PERCENTAGE / 100)
+    );
+
+    const orderRes = await client.query(
       `
         INSERT INTO orders (
           store_id,
@@ -191,18 +367,18 @@ router.post("/initiate", verifyUser, async (req, res) => {
         address.suburb || null,
         address.province || null,
         address.postal_code || null,
-        JSON.stringify(normalizedItems),
+        JSON.stringify(pricedItems),
         cartTotal,
         safeLocationPrice,
-        numericTotal,
-        Number(fuuviaCommission.toFixed(2)),
+        roundedInputTotal,
+        fuuviaCommission,
       ]
     );
 
     const orderId = orderRes.rows[0].id;
     const reference = `ORD-${orderId}-STR-${storeId}-${Date.now()}`;
 
-    await pool.query(
+    await client.query(
       `
         UPDATE orders
         SET reference = $1
@@ -211,9 +387,6 @@ router.post("/initiate", verifyUser, async (req, res) => {
       [reference, orderId]
     );
 
-    // ------------------------
-    // Paystack Payload
-    // ------------------------
     const paystackPayload = {
       email: customerEmail,
       amount: amountInKobo,
@@ -234,10 +407,11 @@ router.post("/initiate", verifyUser, async (req, res) => {
       orderId,
       reference,
       storeId,
-      total: numericTotal,
+      total: roundedInputTotal,
       cartTotal,
       locationFee: safeLocationPrice,
-      fuuviaCommission: Number(fuuviaCommission.toFixed(2)),
+      affiliateMarkup: AFFILIATE_MARKUP,
+      fuuviaCommission,
     });
 
     const paystackRes = await fetch(
@@ -258,7 +432,7 @@ router.post("/initiate", verifyUser, async (req, res) => {
     } catch (parseErr) {
       console.error("🚨 Failed to parse Paystack init response:", parseErr);
 
-      await pool.query(
+      await client.query(
         `
           UPDATE orders
           SET payment_status = 'failed',
@@ -276,7 +450,7 @@ router.post("/initiate", verifyUser, async (req, res) => {
     if (!paystackRes.ok || !data.status) {
       console.error("🚨 Paystack init failed:", data);
 
-      await pool.query(
+      await client.query(
         `
           UPDATE orders
           SET payment_status = 'failed',
@@ -299,7 +473,9 @@ router.post("/initiate", verifyUser, async (req, res) => {
     });
   } catch (err) {
     console.error("🚨 Payment initiation error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: err.message || "Internal server error" });
+  } finally {
+    client.release();
   }
 });
 
