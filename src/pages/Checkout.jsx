@@ -43,17 +43,40 @@ export default function Checkout() {
     if (!Array.isArray(items)) return [];
 
     return items
-      .map((item) => ({
-        product_id: item.product_id ?? null,
-        variant_id: item.variant_id ?? item.id ?? null,
-        sku_id: item.sku_id ?? null,
-        name: item.name ?? "",
-        variant: item.variant ?? "",
-        size: item.size ?? null,
-        price: Number(item.price) || 0,
-        quantity: Math.max(1, Number(item.quantity) || Number(item.qty) || 1),
-        image: item.image ?? "",
-      }))
+      .map((item) => {
+        const basePrice = Number(
+          item.base_price ??
+            item.seller_price ??
+            item.product_base_price ??
+            0
+        );
+
+        const markupPrice = Number(
+          item.markup_price ??
+            (basePrice +
+              basePrice *
+                ((Number(item.markup_percentage || item.markup_percent) || 10) /
+                  100))
+        );
+
+        const finalPrice = Number(
+          item.price ??
+            item.final_price ??
+            (markupPrice + Number(item.affiliate_markup || 0))
+        );
+
+        return {
+          product_id: item.product_id ?? null,
+          variant_id: item.variant_id ?? item.id ?? null,
+          sku_id: item.sku_id ?? null,
+          name: item.name ?? "",
+          variant: item.variant ?? "",
+          size: item.size ?? null,
+          price: finalPrice,
+          quantity: Math.max(1, Number(item.quantity) || Number(item.qty) || 1),
+          image: item.image ?? "",
+        };
+      })
       .filter((item) => item.variant_id !== null);
   };
 
@@ -244,7 +267,7 @@ export default function Checkout() {
       window.location.href = data.authorization_url;
     } catch (err) {
       console.error(err);
-      alert(err?.response?.data?.message || "Payment initiation failed");
+      alert(err?.response?.data?.message || err?.response?.data?.error || "Payment initiation failed");
       setPaying(false);
     }
   };
