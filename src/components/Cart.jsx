@@ -1,4 +1,3 @@
-// components/Cart.jsx
 import React, { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import "../styles/Cart.css";
@@ -21,43 +20,66 @@ export default function Cart({
   const [checkingAuth, setCheckingAuth] = useState(false);
 
   const normalizedItems = useMemo(() => {
-    return cartItems.map((item, index) => ({
-      ...item,
-      product_id:
-        item.product_id ??
-        item.productId ??
-        item.base_product_id ??
-        item.parent_product_id ??
-        null,
+    return cartItems.map((item, index) => {
+      const basePrice = Number(
+        item.base_price ??
+          item.seller_price ??
+          item.product_base_price ??
+          0
+      );
 
-      variant_id:
-        item.variant_id ??
-        item.variantId ??
-        item.id ??
-        null,
+      const markupPrice = Number(
+        item.markup_price ??
+          (basePrice +
+            basePrice *
+              ((Number(item.markup_percentage || item.markup_percent) || 10) /
+                100))
+      );
 
-      sku_id:
-        item.sku_id ??
-        item.skuId ??
-        item.sku?.id ??
-        item.sku?.sku_id ??
-        null,
+      const finalPrice = Number(
+        item.price ??
+          item.final_price ??
+          (markupPrice + Number(item.affiliate_markup || 0))
+      );
 
-      store_id: item.store_id ?? storeId ?? null,
-      name: item.name ?? item.product_name ?? "Item",
-      variant: item.variant ?? item.variant_name ?? item.color ?? "",
-      size: item.size ?? item.size_name ?? item.selectedSize ?? null,
-      price: Number(item.price ?? item.amount ?? 0) || 0,
-      quantity: Math.max(
-        1,
-        Number(item.quantity ?? item.qty ?? item.count ?? 1) || 1
-      ),
-      image: item.image ?? item.image_url ?? "",
-      cart_key:
-        item.cart_key ??
-        item.cartKey ??
-        `${item.store_id ?? storeId ?? "no-store"}-${item.product_id ?? item.productId ?? "no-product"}-${item.variant_id ?? item.variantId ?? item.id ?? "no-variant"}-${item.sku_id ?? item.skuId ?? "no-sku"}-${item.size ?? item.size_name ?? item.selectedSize ?? "no-size"}-${index}`,
-    }));
+      return {
+        ...item,
+        product_id:
+          item.product_id ??
+          item.productId ??
+          item.base_product_id ??
+          item.parent_product_id ??
+          null,
+
+        variant_id:
+          item.variant_id ??
+          item.variantId ??
+          item.id ??
+          null,
+
+        sku_id:
+          item.sku_id ??
+          item.skuId ??
+          item.sku?.id ??
+          item.sku?.sku_id ??
+          null,
+
+        store_id: item.store_id ?? storeId ?? null,
+        name: item.name ?? item.product_name ?? "Item",
+        variant: item.variant ?? item.variant_name ?? item.color ?? "",
+        size: item.size ?? item.size_name ?? item.selectedSize ?? null,
+        price: finalPrice,
+        quantity: Math.max(
+          1,
+          Number(item.quantity ?? item.qty ?? item.count ?? 1) || 1
+        ),
+        image: item.image ?? item.image_url ?? "",
+        cart_key:
+          item.cart_key ??
+          item.cartKey ??
+          `${item.store_id ?? storeId ?? "no-store"}-${item.product_id ?? item.productId ?? "no-product"}-${item.variant_id ?? item.variantId ?? item.id ?? "no-variant"}-${item.sku_id ?? item.skuId ?? "no-sku"}-${item.size ?? item.size_name ?? item.selectedSize ?? "no-size"}-${index}`,
+      };
+    });
   }, [cartItems, storeId]);
 
   const total = normalizedItems.reduce(
@@ -171,7 +193,7 @@ export default function Cart({
                     <h4>{item.name}</h4>
                     {item.variant && <p>Variant: {item.variant}</p>}
                     {item.size && <p>Size: {item.size}</p>}
-                    <p>R{item.price.toFixed(2)}</p>
+                    <p>R{Number(item.price || 0).toFixed(2)}</p>
 
                     <div className="qty-controls">
                       <button
