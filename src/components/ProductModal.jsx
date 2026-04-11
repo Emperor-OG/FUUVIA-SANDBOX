@@ -1,4 +1,3 @@
-// components/ProductModal.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "../styles/ProductModal.css";
@@ -119,7 +118,7 @@ export default function ProductModal({
       if (prev?.id === variant.id) return prev;
       return variant;
     });
-  }, [currentImage, allImages]);
+  }, [currentImage, allImages, selectedVariant]);
 
   useEffect(() => {
     if (!selectedVariant) {
@@ -166,12 +165,26 @@ export default function ProductModal({
 
   const availableStock = Math.max(Number(rawStock || 0) - getCartQuantity(), 0);
 
-  const price =
+  const basePrice = Number(
+    selectedVariant?.seller_price ??
+      product?.base_price ??
+      product?.seller_price ??
+      0
+  );
+
+  const markupPrice = Number(
     selectedVariant?.markup_price ??
+      product?.markup_price ??
+      (basePrice +
+        basePrice * ((selectedVariant?.markup_percentage || product?.markup_percentage || 10) / 100))
+  );
+
+  const price = Number(
     selectedVariant?.price ??
-    product?.markup_price ??
-    product?.base_price ??
-    0;
+      product?.price ??
+      product?.final_price ??
+      (markupPrice + Number(product?.affiliate_markup || 0))
+  );
 
   const nextImage = () => {
     if (!allImages.length) return;
