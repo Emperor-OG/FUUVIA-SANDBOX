@@ -11,6 +11,7 @@ const {
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const PLATFORM_PERCENTAGE = parseFloat(process.env.PLATFORM_PERCENTAGE) || 10;
 const FRONTEND_URL = process.env.FRONTEND_URL;
+const REF_COOKIE_NAME = "fuuvia_affiliate_ref";
 
 // ------------------------
 // Auth Middleware
@@ -44,6 +45,76 @@ function normalizeItems(items = []) {
 function getSafeNumber(value, fallback = 0) {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
+}
+
+function getItemCount(items = []) {
+  if (!Array.isArray(items)) return 0;
+
+  return items.reduce((sum, item) => {
+    return sum + Math.max(1, Number(item.quantity || item.qty || 1));
+  }, 0);
+}
+
+function parseCookies(cookieHeader = "") {
+  const cookies = {};
+
+  if (!cookieHeader || typeof cookieHeader !== "string") {
+    return cookies;
+  }
+
+  const parts = cookieHeader.split(";");
+
+  for (const part of parts) {
+    const [rawKey, ...rawValueParts] = part.split("=");
+    const key = rawKey?.trim();
+
+    if (!key) continue;
+
+    const value = rawValueParts.join("=").trim();
+    cookies[key] = decodeURIComponent(value || "");
+  }
+
+  return cookies;
+}
+
+function getAffiliateCookie(req) {
+  try {
+    const cookies = parseCookies(req.headers.cookie || "");
+    const raw = cookies[REF_COOKIE_NAME];
+
+    if (!raw) return null;
+
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error("Failed to parse affiliate cookie:", error);
+    return null;
+  }
+}
+
+async function getActiveAffiliateFromCookie(client, req) {
+  const cookieData = getAffiliateCookie(req);
+
+  if (!cookieData?.code) {
+    return null;
+  }
+
+  const affiliateRes = await client.query(
+    `
+      SELECT id, full_name, email, referral_code, status
+      FROM affiliates
+      WHERE referral_code = $1
+      LIMIT 1
+    `,
+    [String(cookieData.code).trim().toUpperCase()]
+  );
+
+  const affiliate = affiliateRes.rows[0];
+
+  if (!affiliate || affiliate.status !== "active") {
+    return null;
+  }
+
+  return affiliate;
 }
 
 async function getStore(client, storeId) {
@@ -308,10 +379,22 @@ router.post("/initiate", verifyUser, async (req, res) => {
       });
     }
 
+    const activeAffiliate = await getActiveAffiliateFromCookie(client, req);
+    const affiliateAmount = activeAffiliate
+      ? roundCurrency(
+          pricedItems.reduce(
+            (sum, item) => sum + Number(AFFILIATE_MARKUP || 0) * Number(item.quantity || 0),
+            0
+          )
+        )
+      : 0;
+
     const amountInKobo = Math.round(roundedInputTotal * 100);
     const fuuviaCommission = roundCurrency(
       roundedInputTotal * (PLATFORM_PERCENTAGE / 100)
     );
+
+    await client.query("BEGIN");
 
     const orderRes = await client.query(
       `
@@ -338,6 +421,10 @@ router.post("/initiate", verifyUser, async (req, res) => {
           location_fee,
           total_amount,
           fuuvia_commission,
+          affiliate_id,
+          affiliate_code,
+          affiliate_amount,
+          affiliate_status,
           payment_status,
           order_status,
           settled
@@ -345,6 +432,7 @@ router.post("/initiate", verifyUser, async (req, res) => {
           $1,$2,$3,$4,$5,$6,$7,$8,$9,
           $10,$11,$12,$13,$14,$15,$16,$17,
           $18,$19,$20,$21,$22,
+          $23,$24,$25,$26,
           'pending','pending',false
         )
         RETURNING id
@@ -372,6 +460,10 @@ router.post("/initiate", verifyUser, async (req, res) => {
         safeLocationPrice,
         roundedInputTotal,
         fuuviaCommission,
+        activeAffiliate?.id || null,
+        activeAffiliate?.referral_code || null,
+        affiliateAmount,
+        activeAffiliate ? "tracked" : "none",
       ]
     );
 
@@ -387,6 +479,43 @@ router.post("/initiate", verifyUser, async (req, res) => {
       [reference, orderId]
     );
 
+    if (activeAffiliate) {
+      await client.query(
+        `
+          INSERT INTO affiliate_earnings (
+            affiliate_id,
+            order_id,
+            order_reference,
+            customer_name,
+            customer_email,
+            customer_phone,
+            item_count,
+            order_total,
+            earning_amount,
+            order_status,
+            earning_status
+          )
+          VALUES (
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
+          )
+          ON CONFLICT (order_id) DO NOTHING
+        `,
+        [
+          activeAffiliate.id,
+          orderId,
+          reference,
+          customerName || null,
+          customerEmail || null,
+          customerPhone || null,
+          getItemCount(pricedItems),
+          roundedInputTotal,
+          affiliateAmount,
+          "pending",
+          "tracked",
+        ]
+      );
+    }
+
     const paystackPayload = {
       email: customerEmail,
       amount: amountInKobo,
@@ -400,6 +529,9 @@ router.post("/initiate", verifyUser, async (req, res) => {
       metadata: {
         order_id: orderId,
         store_id: storeId,
+        affiliate_id: activeAffiliate?.id || null,
+        affiliate_code: activeAffiliate?.referral_code || null,
+        affiliate_amount: affiliateAmount,
       },
     };
 
@@ -411,6 +543,9 @@ router.post("/initiate", verifyUser, async (req, res) => {
       cartTotal,
       locationFee: safeLocationPrice,
       affiliateMarkup: AFFILIATE_MARKUP,
+      affiliateId: activeAffiliate?.id || null,
+      affiliateCode: activeAffiliate?.referral_code || null,
+      affiliateAmount,
       fuuviaCommission,
     });
 
@@ -436,11 +571,31 @@ router.post("/initiate", verifyUser, async (req, res) => {
         `
           UPDATE orders
           SET payment_status = 'failed',
-              order_status = 'cancelled'
+              order_status = 'cancelled',
+              affiliate_status = CASE
+                WHEN affiliate_id IS NOT NULL THEN 'reversed'
+                ELSE affiliate_status
+              END
           WHERE id = $1
         `,
         [orderId]
       );
+
+      if (activeAffiliate) {
+        await client.query(
+          `
+            UPDATE affiliate_earnings
+            SET
+              order_status = 'cancelled',
+              earning_status = 'reversed',
+              updated_at = NOW()
+            WHERE order_id = $1
+          `,
+          [orderId]
+        );
+      }
+
+      await client.query("COMMIT");
 
       return res.status(500).json({
         error: "Invalid response from Paystack",
@@ -454,24 +609,54 @@ router.post("/initiate", verifyUser, async (req, res) => {
         `
           UPDATE orders
           SET payment_status = 'failed',
-              order_status = 'cancelled'
+              order_status = 'cancelled',
+              affiliate_status = CASE
+                WHEN affiliate_id IS NOT NULL THEN 'reversed'
+                ELSE affiliate_status
+              END
           WHERE id = $1
         `,
         [orderId]
       );
+
+      if (activeAffiliate) {
+        await client.query(
+          `
+            UPDATE affiliate_earnings
+            SET
+              order_status = 'cancelled',
+              earning_status = 'reversed',
+              updated_at = NOW()
+            WHERE order_id = $1
+          `,
+          [orderId]
+        );
+      }
+
+      await client.query("COMMIT");
 
       return res.status(500).json({
         error: data.message || "Paystack initialization failed",
       });
     }
 
+    await client.query("COMMIT");
+
     return res.json({
       authorization_url: data.data.authorization_url,
       access_code: data.data.access_code,
       reference,
       order_id: orderId,
+      affiliate: activeAffiliate
+        ? {
+            id: activeAffiliate.id,
+            code: activeAffiliate.referral_code,
+            amount: affiliateAmount,
+          }
+        : null,
     });
   } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
     console.error("🚨 Payment initiation error:", err);
     return res.status(500).json({ error: err.message || "Internal server error" });
   } finally {
@@ -498,7 +683,7 @@ router.get("/verify/:reference", verifyUser, async (req, res) => {
 
     const orderRes = await pool.query(
       `
-        SELECT id, reference, payment_status, order_status, settled
+        SELECT id, reference, payment_status, order_status, settled, affiliate_id, affiliate_code, affiliate_amount, affiliate_status
         FROM orders
         WHERE reference = $1
         LIMIT 1
