@@ -144,7 +144,7 @@ app.use("/api", locationsRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", verifyUser, ordersRouter);
 app.use("/api/paystack", paystackWebhookRouter);
-app.use("/", referralRoutes);
+app.use("/", referralRoutes); //referral
 
 // -----------------------------------
 // Cron Jobs
