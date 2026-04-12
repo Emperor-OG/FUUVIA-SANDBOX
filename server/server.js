@@ -156,7 +156,14 @@ try {
   const {
     startUpdateStoreStatusJob,
   } = require("./routes/cron/updateStoreStatus");
+
+  const {
+    startAffiliatePayoutJob,
+  } = require("./routes/cron/updateAffiliatePayout"); // 👈 ADD THIS
+
   startUpdateStoreStatusJob();
+  startAffiliatePayoutJob(); // 👈 START IT
+
 } catch (err) {
   console.error("Error initializing cron jobs:", err);
 }
