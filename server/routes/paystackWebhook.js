@@ -233,6 +233,42 @@ async function deductStockForItem(client, item) {
   };
 }
 
+async function markAffiliateCompleted(client, orderId) {
+  const result = await client.query(
+    `
+      UPDATE affiliate_earnings
+      SET
+        order_status = 'pending',
+        earning_status = 'completed',
+        completed_at = NOW(),
+        eligible_for_payout_at = NOW() + INTERVAL '5 days',
+        updated_at = NOW()
+      WHERE order_id = $1
+      RETURNING *
+    `,
+    [orderId]
+  );
+
+  return result.rows[0] || null;
+}
+
+async function markAffiliateReversed(client, orderId) {
+  const result = await client.query(
+    `
+      UPDATE affiliate_earnings
+      SET
+        order_status = 'cancelled',
+        earning_status = 'reversed',
+        updated_at = NOW()
+      WHERE order_id = $1
+      RETURNING *
+    `,
+    [orderId]
+  );
+
+  return result.rows[0] || null;
+}
+
 // -------------------------
 // Paystack Webhook
 // -------------------------
@@ -320,6 +356,10 @@ router.post(
             o.total_amount,
             o.payment_status,
             o.order_status,
+            o.affiliate_id,
+            o.affiliate_code,
+            o.affiliate_amount,
+            o.affiliate_status,
             s.store_name,
             s.email AS store_email
           FROM orders o
@@ -393,12 +433,21 @@ router.post(
                 order_status = 'pending',
                 settled = true,
                 paid_at = NOW(),
+                affiliate_status = CASE
+                  WHEN affiliate_id IS NOT NULL THEN 'completed'
+                  ELSE affiliate_status
+                END,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING id, reference, payment_status, order_status, paid_at, updated_at
+            RETURNING id, reference, payment_status, order_status, paid_at, updated_at, affiliate_status
           `,
           [orderId]
         );
+
+        let affiliateUpdate = null;
+        if (order.affiliate_id) {
+          affiliateUpdate = await markAffiliateCompleted(client, orderId);
+        }
 
         await client.query("COMMIT");
         client.release();
@@ -444,6 +493,7 @@ router.post(
           "📦 Order activated, stock deducted, hierarchy synced, notifications queued:",
           {
             order: update.rows[0],
+            affiliateUpdate,
             deductions: deductionResults,
             hierarchySync,
             customerAlerted,
@@ -473,17 +523,30 @@ router.post(
             UPDATE orders
             SET payment_status = 'failed',
                 order_status = 'cancelled',
+                affiliate_status = CASE
+                  WHEN affiliate_id IS NOT NULL THEN 'reversed'
+                  ELSE affiliate_status
+                END,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING id, reference, payment_status, order_status, updated_at
+            RETURNING id, reference, payment_status, order_status, affiliate_status, updated_at
           `,
           [orderId]
         );
 
+        let affiliateUpdate = null;
+        if (order.affiliate_id) {
+          affiliateUpdate = await markAffiliateReversed(client, orderId);
+        }
+
         await client.query("COMMIT");
         client.release();
 
-        console.log("🧾 Failed order updated:", update.rows[0]);
+        console.log("🧾 Failed order updated:", {
+          order: update.rows[0],
+          affiliateUpdate,
+        });
+
         return res.sendStatus(200);
       }
 
