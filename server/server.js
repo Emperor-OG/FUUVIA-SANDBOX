@@ -134,6 +134,7 @@ const paymentRoutes = require("./routes/payment");
 const ordersRouter = require("./routes/orders");
 const paystackWebhookRouter = require("./routes/paystackWebhook");
 const referralRoutes = require("./routes/referrals");
+const categoriesRoutes = require("./routes/categories");
 
 app.use("/api/user", userRoutes);
 app.use("/api/stores", marketRoutes);
@@ -145,6 +146,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", verifyUser, ordersRouter);
 app.use("/api/paystack", paystackWebhookRouter);
 app.use("/", referralRoutes); //referral
+app.use("/api/categories", categoriesRoutes);
 
 // -----------------------------------
 // Cron Jobs
