@@ -1,7 +1,7 @@
 const { Storage } = require("@google-cloud/storage");
 
 /* =========================================================
-   GCP CREDENTIALS
+   SAFER CREDENTIAL LOADING
 ========================================================= */
 const credentials = {
   type: "service_account",
@@ -12,88 +12,92 @@ const credentials = {
   client_id: process.env.GCP_CLIENT_ID,
   auth_uri: process.env.GCP_AUTH_URI,
   token_uri: process.env.GCP_TOKEN_URI,
-  auth_provider_x509_cert_url:
-    process.env.GCP_AUTH_PROVIDER_CERT_URL,
-  client_x509_cert_url:
-    process.env.GCP_CLIENT_CERT_URL,
+  auth_provider_x509_cert_url: process.env.GCP_AUTH_PROVIDER_CERT_URL,
+  client_x509_cert_url: process.env.GCP_CLIENT_CERT_URL,
 };
 
 /* =========================================================
-   STORAGE INIT
+   STORAGE INIT (IMPORTANT: no deprecated "credentials" usage)
 ========================================================= */
 const storage = new Storage({
-  credentials,
   projectId: process.env.GCP_PROJECT_ID,
+  credentials,
 });
 
 /* =========================================================
    BUCKETS
 ========================================================= */
 const buckets = {
-  storeProducts: storage.bucket(
-    process.env.STORE_PRODUCTS
-  ),
-  storeLogos: storage.bucket(
-    process.env.STORE_LOGOS
-  ),
-  storeBanners: storage.bucket(
-    process.env.STORE_BANNERS
-  ),
-  storeDocuments: storage.bucket(
-    process.env.STORE_DOCUMENTS
-  ),
-  storePOA: storage.bucket(
-    process.env.STORE_POA
-  ),
-  proofOfResidence: storage.bucket(
-    process.env.PROOF_OF_RESIDENCE
-  ),
+  storeProducts: storage.bucket(process.env.STORE_PRODUCTS),
+  storeLogos: storage.bucket(process.env.STORE_LOGOS),
+  storeBanners: storage.bucket(process.env.STORE_BANNERS),
+  storeDocuments: storage.bucket(process.env.STORE_DOCUMENTS),
+  storePOA: storage.bucket(process.env.STORE_POA),
+  proofOfResidence: storage.bucket(process.env.PROOF_OF_RESIDENCE),
 };
 
 /* =========================================================
-   UPLOAD FILE (FIXED - NO STREAMS)
+   UPLOAD FILE (FIXED STREAM HANDLING)
 ========================================================= */
 async function uploadFileToBucket(file, bucket) {
-  try {
-    if (!file || !file.buffer) {
-      return null;
-    }
+  if (!file) return null;
 
-    if (
-      !bucket ||
-      typeof bucket.file !== "function"
-    ) {
-      throw new Error(
-        "Invalid bucket provided to uploadFileToBucket()"
-      );
-    }
+  if (!bucket?.file) {
+    throw new Error("Invalid bucket passed to uploadFileToBucket()");
+  }
 
-    const fileName = `${Date.now()}-${file.originalname}`;
+  return new Promise((resolve, reject) => {
+    const safeName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2)}-${file.originalname}`;
 
-    const blob = bucket.file(fileName);
+    const blob = bucket.file(safeName);
 
-    // FIX: use save() instead of createWriteStream()
-    await blob.save(file.buffer, {
+    const stream = blob.createWriteStream({
       resumable: false,
-      contentType: file.mimetype,
-      validation: false,
+      gzip: false, // IMPORTANT: prevents stream corruption in some setups
       metadata: {
-        cacheControl:
-          "public, max-age=31536000",
+        contentType: file.mimetype,
       },
+      timeout: 120000, // prevent premature kill
     });
 
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+    let finished = false;
 
-    console.log(
-      `Uploaded to ${bucket.name}: ${blob.name}`
-    );
+    const cleanup = (err) => {
+      if (finished) return;
+      finished = true;
 
-    return publicUrl;
-  } catch (err) {
-    console.error("GCS Upload Error:", err);
-    throw err;
-  }
+      stream.removeAllListeners();
+
+      if (err) {
+        console.error("GCS Upload Error:", err);
+        reject(err);
+      }
+    };
+
+    stream.on("error", cleanup);
+
+    stream.on("finish", () => {
+      if (finished) return;
+      finished = true;
+
+      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+
+      resolve(publicUrl);
+    });
+
+    try {
+      // VERY IMPORTANT SAFETY CHECK
+      if (!file.buffer) {
+        throw new Error("File buffer is missing (multer misconfigured)");
+      }
+
+      stream.end(Buffer.from(file.buffer));
+    } catch (err) {
+      cleanup(err);
+    }
+  });
 }
 
 /* =========================================================
@@ -103,29 +107,22 @@ async function deleteFileFromBucket(bucket, fileUrl) {
   try {
     if (!fileUrl) return;
 
-    const parts = fileUrl.split("/");
     const fileName = decodeURIComponent(
-      parts.slice(4).join("/")
+      fileUrl.split(`/${bucket.name}/`)[1]
     );
 
     await bucket.file(fileName).delete();
 
-    console.log(`Deleted file: ${fileName}`);
+    console.log("Deleted file:", fileName);
   } catch (err) {
-    if (err.code === 404) {
-      console.log(
-        "File not found, skipping delete..."
-      );
-    } else {
+    if (err.code !== 404) {
       console.error("Delete failed:", err);
     }
   }
 }
 
-/* =========================================================
-   EXPORTS
-========================================================= */
 module.exports = {
+  storage,
   buckets,
   uploadFileToBucket,
   deleteFileFromBucket,
