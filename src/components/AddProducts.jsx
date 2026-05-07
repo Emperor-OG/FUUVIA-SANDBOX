@@ -1,7 +1,12 @@
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import "../styles/AddProducts.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "";
+const API_URL =
+  import.meta.env.VITE_API_URL || "";
 
 /* =========================================================
    ADD IMAGE BUTTON
@@ -59,21 +64,13 @@ export default function AddProducts({
   onProductAdded,
 }) {
   /* =========================================================
-     CATEGORIES
-  ========================================================= */
-  const categories = [
-    "Phones",
-    "Laptops",
-    "Footwear",
-    "Clothing",
-    "Accessories",
-    "Vapes",
-  ];
-
-  /* =========================================================
      STATE
   ========================================================= */
-  const [name, setName] = useState("");
+  const [categories, setCategories] =
+    useState([]);
+
+  const [name, setName] =
+    useState("");
 
   const [description, setDescription] =
     useState("");
@@ -94,6 +91,41 @@ export default function AddProducts({
 
   const [loading, setLoading] =
     useState(false);
+
+  const [loadingCategories, setLoadingCategories] =
+    useState(true);
+
+  /* =========================================================
+     FETCH CATEGORIES
+  ========================================================= */
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/api/categories`
+        );
+
+        if (!res.ok) {
+          throw new Error(
+            "Failed to fetch categories"
+          );
+        }
+
+        const data = await res.json();
+
+        setCategories(data);
+      } catch (err) {
+        console.error(
+          "Categories fetch error:",
+          err
+        );
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   if (!isOpen) return null;
 
@@ -355,15 +387,17 @@ export default function AddProducts({
             required
           >
             <option value="">
-              Select Category
+              {loadingCategories
+                ? "Loading categories..."
+                : "Select Category"}
             </option>
 
             {categories.map((cat) => (
               <option
-                key={cat}
-                value={cat}
+                key={cat.id}
+                value={cat.name}
               >
-                {cat}
+                {cat.name}
               </option>
             ))}
           </select>
@@ -594,7 +628,10 @@ export default function AddProducts({
           <button
             type="submit"
             className="submit-btn"
-            disabled={loading}
+            disabled={
+              loading ||
+              loadingCategories
+            }
           >
             {loading
               ? "Saving..."
