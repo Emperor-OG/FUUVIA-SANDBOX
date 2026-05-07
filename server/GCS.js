@@ -1,14 +1,24 @@
 const { Storage } = require("@google-cloud/storage");
 
 /* =========================================================
-   SAFE AUTH (FIXED — DO NOT USE FULL credentials OBJECT)
+   CREDENTIALS
 ========================================================= */
+const credentials = {
+  type: "service_account",
+  project_id: process.env.GCP_PROJECT_ID,
+  private_key_id: process.env.GCP_PRIVATE_KEY_ID,
+  private_key: process.env.GCP_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+  client_email: process.env.GCP_CLIENT_EMAIL,
+  client_id: process.env.GCP_CLIENT_ID,
+  auth_uri: process.env.GCP_AUTH_URI,
+  token_uri: process.env.GCP_TOKEN_URI,
+  auth_provider_x509_cert_url: process.env.GCP_AUTH_PROVIDER_CERT_URL,
+  client_x509_cert_url: process.env.GCP_CLIENT_CERT_URL,
+};
+
 const storage = new Storage({
   projectId: process.env.GCP_PROJECT_ID,
-  credentials: {
-    client_email: process.env.GCP_CLIENT_EMAIL,
-    private_key: process.env.GCP_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-  },
+  credentials,
 });
 
 /* =========================================================
@@ -24,16 +34,20 @@ const buckets = {
 };
 
 /* =========================================================
-   UPLOAD FILE (STREAM-SAFE VERSION)
+   UPLOAD (FIXED + ROBUST)
 ========================================================= */
 async function uploadFileToBucket(file, bucket) {
-  if (!file?.buffer || !bucket) return null;
+  if (!file) return null;
 
-  const fileName = `${Date.now()}-${Math.random()
+  if (!file.buffer) {
+    throw new Error("File buffer missing (multer config issue)");
+  }
+
+  const safeName = `${Date.now()}-${Math.random()
     .toString(36)
-    .substring(2)}-${file.originalname}`;
+    .substring(2)}-${file.originalname.replace(/\s/g, "_")}`;
 
-  const blob = bucket.file(fileName);
+  const blob = bucket.file(safeName);
 
   return new Promise((resolve, reject) => {
     const stream = blob.createWriteStream({
@@ -43,50 +57,34 @@ async function uploadFileToBucket(file, bucket) {
       },
     });
 
-    let done = false;
-
-    const fail = (err) => {
-      if (done) return;
-      done = true;
-
-      console.error("GCS Upload Error:", err);
+    stream.on("error", (err) => {
+      console.error("GCS upload error:", err);
       reject(err);
-    };
-
-    stream.on("error", fail);
-
-    stream.on("finish", () => {
-      if (done) return;
-      done = true;
-
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-      resolve(publicUrl);
     });
 
-    try {
-      // IMPORTANT: ensure buffer is stable
-      const buffer = Buffer.from(file.buffer);
-      stream.end(buffer);
-    } catch (err) {
-      fail(err);
-    }
+    stream.on("finish", () => {
+      resolve(
+        `https://storage.googleapis.com/${bucket.name}/${blob.name}`
+      );
+    });
+
+    stream.end(file.buffer);
   });
 }
 
 /* =========================================================
-   DELETE FILE
+   DELETE
 ========================================================= */
 async function deleteFileFromBucket(bucket, fileUrl) {
   try {
     if (!fileUrl) return;
 
-    const fileName = decodeURIComponent(
-      fileUrl.split(`/${bucket.name}/`)[1]
-    );
+    const parts = fileUrl.split(`/storage.googleapis.com/${bucket.name}/`);
+    const fileName = parts[1];
+
+    if (!fileName) return;
 
     await bucket.file(fileName).delete();
-
-    console.log("Deleted:", fileName);
   } catch (err) {
     if (err.code !== 404) {
       console.error("Delete failed:", err);
