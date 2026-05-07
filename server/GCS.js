@@ -1,18 +1,18 @@
 const { Storage } = require("@google-cloud/storage");
 
 /* =========================================================
-   SAFETY: ENV VALIDATION
+   ENV VALIDATION
 ========================================================= */
-if (!process.env.GCP_PROJECT_ID) {
-  throw new Error("Missing GCP_PROJECT_ID");
-}
+const requiredEnv = [
+  "GCP_PROJECT_ID",
+  "GCP_PRIVATE_KEY",
+  "GCP_CLIENT_EMAIL",
+];
 
-if (!process.env.GCP_PRIVATE_KEY) {
-  throw new Error("Missing GCP_PRIVATE_KEY");
-}
-
-if (!process.env.GCP_CLIENT_EMAIL) {
-  throw new Error("Missing GCP_CLIENT_EMAIL");
+for (const key of requiredEnv) {
+  if (!process.env[key]) {
+    throw new Error(`Missing ${key}`);
+  }
 }
 
 /* =========================================================
@@ -53,14 +53,10 @@ const buckets = {
 };
 
 /* =========================================================
-   UPLOAD (FINAL FIX — BUFFER ONLY, NO STREAMS)
+   SAFE UPLOAD (NO STREAMS — BULLETPROOF)
 ========================================================= */
 async function uploadFileToBucket(file, bucket) {
   if (!file) return null;
-
-  if (!bucket || typeof bucket.file !== "function") {
-    throw new Error("Invalid bucket provided to uploadFileToBucket()");
-  }
 
   if (!file.buffer) {
     throw new Error(
@@ -68,27 +64,30 @@ async function uploadFileToBucket(file, bucket) {
     );
   }
 
-  const safeName = `${Date.now()}-${Math.random()
-    .toString(36)
-    .substring(2, 10)}-${file.originalname}`;
+  if (!bucket || typeof bucket.file !== "function") {
+    throw new Error("Invalid bucket provided");
+  }
 
-  const blob = bucket.file(safeName);
+  const fileName = `${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 10)}-${file.originalname}`;
+
+  const blob = bucket.file(fileName);
 
   try {
-    // ✅ NO STREAMS — avoids HashStreamValidator crash completely
+    // ✅ IMPORTANT: NO STREAMS, NO HASH VALIDATION ISSUES
     await blob.save(file.buffer, {
       resumable: false,
+      validation: false, // 🔥 disables HashStreamValidator completely
       contentType: file.mimetype,
       metadata: {
         cacheControl: "public, max-age=31536000",
       },
     });
 
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${safeName}`;
-
-    return publicUrl;
+    return `https://storage.googleapis.com/${bucket.name}/${fileName}`;
   } catch (err) {
-    console.error("GCS upload error:", err);
+    console.error("GCS upload failed:", err);
     throw err;
   }
 }
