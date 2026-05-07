@@ -3,11 +3,10 @@ const router = express.Router();
 const multer = require("multer");
 const pool = require("../db");
 const { uploadFileToBucket, buckets } = require("../GCS");
+
 const {
-  MARKUP_PERCENTAGE,
-  AFFILIATE_MARKUP,
-  getMarkupPrice,
-  getFinalPrice,
+  calculatePricing,
+  AFFILIATE_MARKUP_PERCENT,
 } = require("../config/pricing");
 
 require("dotenv").config();
@@ -27,7 +26,9 @@ router.post("/:storeId/products", upload.array("images"), async (req, res) => {
     const { name, description, category, variants } = req.body;
 
     if (!name || !variants) {
-      return res.status(400).json({ error: "Name and variants required" });
+      return res.status(400).json({
+        error: "Name and variants required",
+      });
     }
 
     const parsedVariants = JSON.parse(variants);
@@ -35,9 +36,10 @@ router.post("/:storeId/products", upload.array("images"), async (req, res) => {
     await client.query("BEGIN");
 
     const productRes = await client.query(
-      `INSERT INTO products (store_id, name, description, category, stock)
-       VALUES ($1,$2,$3,$4,0)
-       RETURNING *`,
+      `INSERT INTO products
+      (store_id, name, description, category, stock)
+      VALUES ($1,$2,$3,$4,0)
+      RETURNING *`,
       [storeId, name, description, category]
     );
 
@@ -50,6 +52,7 @@ router.post("/:storeId/products", upload.array("images"), async (req, res) => {
       const v = parsedVariants[i];
 
       let imageUrl = null;
+
       if (req.files && req.files[i]) {
         imageUrl = await uploadFileToBucket(
           req.files[i],
@@ -57,26 +60,45 @@ router.post("/:storeId/products", upload.array("images"), async (req, res) => {
         );
       }
 
-      const variantStock = Array.isArray(v.skus) && v.skus.length
-        ? v.skus.reduce((sum, sku) => sum + Number(sku.stock || 0), 0)
-        : Number(v.stock || 0);
+      const variantStock =
+        Array.isArray(v.skus) && v.skus.length
+          ? v.skus.reduce(
+              (sum, sku) => sum + Number(sku.stock || 0),
+              0
+            )
+          : Number(v.stock || 0);
 
-      const sellerPrice = Number(v.seller_price || 0);
-      const markupPrice = getMarkupPrice(sellerPrice);
+      const pricing = await calculatePricing({
+        client,
+        sellerPrice: v.seller_price,
+        category,
+      });
 
       const variantRes = await client.query(
         `INSERT INTO variants
-        (product_id,name,seller_price,markup_price,stock,image_url,markup_percent)
-        VALUES ($1,$2,$3,$4,$5,$6,$7)
+        (
+          product_id,
+          name,
+          seller_price,
+          markup_price,
+          final_price,
+          stock,
+          image_url,
+          markup_percent,
+          affiliate_markup_percent
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         RETURNING *`,
         [
           product.id,
           v.name,
-          sellerPrice,
-          markupPrice,
+          pricing.seller_price,
+          pricing.markup_price,
+          pricing.final_price,
           variantStock,
           imageUrl,
-          MARKUP_PERCENTAGE,
+          pricing.markup_percentage,
+          pricing.affiliate_markup_percentage,
         ]
       );
 
@@ -85,8 +107,9 @@ router.post("/:storeId/products", upload.array("images"), async (req, res) => {
       if (Array.isArray(v.skus) && v.skus.length) {
         for (const sku of v.skus) {
           await client.query(
-            `INSERT INTO skus (variant_id,size,stock)
-             VALUES ($1,$2,$3)`,
+            `INSERT INTO skus
+            (variant_id, size, stock)
+            VALUES ($1,$2,$3)`,
             [variant.id, sku.size, sku.stock]
           );
         }
@@ -97,19 +120,33 @@ router.post("/:storeId/products", upload.array("images"), async (req, res) => {
       uploadedVariants.push({
         id: variant.id,
         name: variant.name,
-        seller_price: Number(variant.seller_price || 0),
-        markup_price: Number(variant.markup_price || 0),
-        price: getFinalPrice(variant.markup_price),
-        affiliate_markup: AFFILIATE_MARKUP,
+        seller_price: Number(
+          variant.seller_price || 0
+        ),
+        markup_price: Number(
+          variant.markup_price || 0
+        ),
+        price: Number(
+          variant.final_price || 0
+        ),
+        affiliate_markup_percentage: Number(
+          variant.affiliate_markup_percent || 0
+        ),
         stock: Number(variant.stock || 0),
         image: variant.image_url || null,
-        markup_percentage: Number(variant.markup_percent || MARKUP_PERCENTAGE),
-        skus: Array.isArray(v.skus) ? v.skus : [],
+        markup_percentage: Number(
+          variant.markup_percent || 0
+        ),
+        skus: Array.isArray(v.skus)
+          ? v.skus
+          : [],
       });
     }
 
     await client.query(
-      `UPDATE products SET stock=$1 WHERE id=$2`,
+      `UPDATE products
+       SET stock=$1
+       WHERE id=$2`,
       [productStockTotal, product.id]
     );
 
@@ -124,26 +161,47 @@ router.post("/:storeId/products", upload.array("images"), async (req, res) => {
       description: product.description,
       category: product.category,
       stock: productStockTotal,
-      base_price: firstVariant?.seller_price || 0,
-      markup_price: firstVariant?.markup_price || 0,
-      price: firstVariant?.price || 0,
-      affiliate_markup: AFFILIATE_MARKUP,
+
+      base_price:
+        firstVariant?.seller_price || 0,
+
+      markup_price:
+        firstVariant?.markup_price || 0,
+
+      price:
+        firstVariant?.price || 0,
+
+      affiliate_markup_percentage:
+        firstVariant?.affiliate_markup_percentage ||
+        AFFILIATE_MARKUP_PERCENT,
+
       markup_percentage:
-        firstVariant?.markup_percentage || MARKUP_PERCENTAGE,
-      images: uploadedVariants.map((v) => v.image).filter(Boolean),
+        firstVariant?.markup_percentage || 0,
+
+      images: uploadedVariants
+        .map((v) => v.image)
+        .filter(Boolean),
+
       variants: uploadedVariants,
     });
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error("Product creation error:", err);
-    res.status(500).json({ error: "Failed to create product" });
+
+    console.error(
+      "Product creation error:",
+      err
+    );
+
+    res.status(500).json({
+      error: "Failed to create product",
+    });
   } finally {
     client.release();
   }
 });
 
 /* =========================================================
-   GET STORE PRODUCTS (OPTIMIZED)
+   GET STORE PRODUCTS
    GET /api/stores/:storeId/products
 ========================================================= */
 router.get("/:storeId/products", async (req, res) => {
@@ -151,7 +209,8 @@ router.get("/:storeId/products", async (req, res) => {
     const { storeId } = req.params;
 
     const productsRes = await pool.query(
-      `SELECT * FROM products
+      `SELECT *
+       FROM products
        WHERE store_id=$1
        ORDER BY id DESC`,
       [storeId]
@@ -159,7 +218,9 @@ router.get("/:storeId/products", async (req, res) => {
 
     const products = productsRes.rows;
 
-    if (!products.length) return res.json([]);
+    if (!products.length) {
+      return res.json([]);
+    }
 
     const productIds = products.map((p) => p.id);
 
@@ -172,6 +233,7 @@ router.get("/:storeId/products", async (req, res) => {
     );
 
     const variants = variantsRes.rows;
+
     const variantIds = variants.map((v) => v.id);
 
     let skus = [];
@@ -191,7 +253,9 @@ router.get("/:storeId/products", async (req, res) => {
     const skuMap = {};
 
     for (const sku of skus) {
-      if (!skuMap[sku.variant_id]) skuMap[sku.variant_id] = [];
+      if (!skuMap[sku.variant_id]) {
+        skuMap[sku.variant_id] = [];
+      }
 
       skuMap[sku.variant_id].push({
         size: sku.size,
@@ -205,27 +269,59 @@ router.get("/:storeId/products", async (req, res) => {
       const variantObj = {
         id: v.id,
         name: v.name,
-        seller_price: Number(v.seller_price || 0),
-        markup_price: Number(v.markup_price || 0),
-        price: getFinalPrice(v.markup_price),
-        affiliate_markup: AFFILIATE_MARKUP,
+
+        seller_price: Number(
+          v.seller_price || 0
+        ),
+
+        markup_price: Number(
+          v.markup_price || 0
+        ),
+
+        price: Number(
+          v.final_price || 0
+        ),
+
+        affiliate_markup_percentage:
+          Number(
+            v.affiliate_markup_percent || 0
+          ),
+
         stock: Number(v.stock || 0),
+
         image: v.image_url || null,
+
         skus: skuMap[v.id] || [],
-        markup_percentage: Number(v.markup_percent || MARKUP_PERCENTAGE),
+
+        markup_percentage: Number(
+          v.markup_percent || 0
+        ),
       };
 
-      if (!variantMap[v.product_id]) variantMap[v.product_id] = [];
-      variantMap[v.product_id].push(variantObj);
+      if (!variantMap[v.product_id]) {
+        variantMap[v.product_id] = [];
+      }
+
+      variantMap[v.product_id].push(
+        variantObj
+      );
     }
 
     const response = products.map((p) => {
-      const productVariants = variantMap[p.id] || [];
+      const productVariants =
+        variantMap[p.id] || [];
 
-      const mainImages = p.main_image ? [p.main_image] : [];
-      const variantImages = productVariants.map((v) => v.image).filter(Boolean);
+      const mainImages = p.main_image
+        ? [p.main_image]
+        : [];
 
-      const firstVariant = productVariants[0];
+      const variantImages =
+        productVariants
+          .map((v) => v.image)
+          .filter(Boolean);
+
+      const firstVariant =
+        productVariants[0];
 
       return {
         id: p.id,
@@ -233,191 +329,352 @@ router.get("/:storeId/products", async (req, res) => {
         description: p.description,
         category: p.category,
         stock: Number(p.stock || 0),
-        base_price: firstVariant?.seller_price || 0,
-        markup_price: firstVariant?.markup_price || 0,
-        price: firstVariant?.price || 0,
-        affiliate_markup: AFFILIATE_MARKUP,
+
+        base_price:
+          firstVariant?.seller_price || 0,
+
+        markup_price:
+          firstVariant?.markup_price || 0,
+
+        price:
+          firstVariant?.price || 0,
+
+        affiliate_markup_percentage:
+          firstVariant?.affiliate_markup_percentage ||
+          AFFILIATE_MARKUP_PERCENT,
+
         markup_percentage:
-          firstVariant?.markup_percentage || MARKUP_PERCENTAGE,
-        images: [...mainImages, ...variantImages],
+          firstVariant?.markup_percentage || 0,
+
+        images: [
+          ...mainImages,
+          ...variantImages,
+        ],
+
         variants: productVariants,
       };
     });
 
     res.json(response);
   } catch (err) {
-    console.error("GET products error:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error(
+      "GET products error:",
+      err
+    );
+
+    res.status(500).json({
+      error: "Server error",
+    });
   }
 });
 
 /* =========================================================
    UPDATE PRODUCT
 ========================================================= */
-router.put("/:storeId/products/:productId", upload.array("images"), async (req, res) => {
-  const client = await pool.connect();
+router.put(
+  "/:storeId/products/:productId",
+  upload.array("images"),
+  async (req, res) => {
+    const client = await pool.connect();
 
-  try {
-    const { storeId, productId } = req.params;
-    const { name, description, category, variants } = req.body;
+    try {
+      const { storeId, productId } =
+        req.params;
 
-    if (!name || !variants) {
-      return res.status(400).json({ error: "Name and variants required" });
-    }
+      const {
+        name,
+        description,
+        category,
+        variants,
+      } = req.body;
 
-    const parsedVariants = JSON.parse(variants);
-
-    await client.query("BEGIN");
-
-    await client.query(
-      `UPDATE products
-       SET name=$1,description=$2,category=$3
-       WHERE id=$4 AND store_id=$5`,
-      [name, description, category, productId, storeId]
-    );
-
-    const existingVariantsRes = await client.query(
-      `SELECT * FROM variants WHERE product_id=$1`,
-      [productId]
-    );
-
-    const existingVariants = existingVariantsRes.rows;
-    const parsedVariantNames = parsedVariants.map((v) => v.name);
-
-    for (const ev of existingVariants) {
-      if (!parsedVariantNames.includes(ev.name)) {
-        await client.query(`DELETE FROM skus WHERE variant_id=$1`, [ev.id]);
-        await client.query(`DELETE FROM variants WHERE id=$1`, [ev.id]);
+      if (!name || !variants) {
+        return res.status(400).json({
+          error:
+            "Name and variants required",
+        });
       }
-    }
 
-    let totalStock = 0;
+      const parsedVariants =
+        JSON.parse(variants);
 
-    for (let i = 0; i < parsedVariants.length; i++) {
-      const v = parsedVariants[i];
+      await client.query("BEGIN");
 
-      const existingVariant = existingVariants.find(
-        (ev) => ev.name === v.name
+      await client.query(
+        `UPDATE products
+         SET
+           name=$1,
+           description=$2,
+           category=$3
+         WHERE id=$4
+         AND store_id=$5`,
+        [
+          name,
+          description,
+          category,
+          productId,
+          storeId,
+        ]
       );
 
-      let imageUrl = existingVariant?.image_url || null;
-
-      if (req.files && req.files[i]) {
-        imageUrl = await uploadFileToBucket(
-          req.files[i],
-          buckets.storeProducts
-        );
-      }
-
-      const variantStock = Array.isArray(v.skus) && v.skus.length
-        ? v.skus.reduce((sum, sku) => sum + Number(sku.stock || 0), 0)
-        : Number(v.stock || 0);
-
-      totalStock += variantStock;
-
-      const sellerPrice = Number(v.seller_price || 0);
-      const markupPrice = getMarkupPrice(sellerPrice);
-
-      let variantId;
-
-      if (existingVariant) {
+      const existingVariantsRes =
         await client.query(
-          `UPDATE variants
-           SET seller_price=$1,markup_price=$2,stock=$3,image_url=$4,markup_percent=$5
-           WHERE id=$6`,
-          [
-            sellerPrice,
-            markupPrice,
-            variantStock,
-            imageUrl,
-            MARKUP_PERCENTAGE,
-            existingVariant.id,
-          ]
+          `SELECT *
+           FROM variants
+           WHERE product_id=$1`,
+          [productId]
         );
 
-        variantId = existingVariant.id;
+      const existingVariants =
+        existingVariantsRes.rows;
 
-        await client.query(`DELETE FROM skus WHERE variant_id=$1`, [variantId]);
-      } else {
-        const variantRes = await client.query(
-          `INSERT INTO variants
-          (product_id,name,seller_price,markup_price,stock,image_url,markup_percent)
-          VALUES ($1,$2,$3,$4,$5,$6,$7)
-          RETURNING id`,
-          [
-            productId,
-            v.name,
-            sellerPrice,
-            markupPrice,
-            variantStock,
-            imageUrl,
-            MARKUP_PERCENTAGE,
-          ]
-        );
+      const parsedVariantNames =
+        parsedVariants.map((v) => v.name);
 
-        variantId = variantRes.rows[0].id;
-      }
-
-      if (Array.isArray(v.skus) && v.skus.length) {
-        for (const sku of v.skus) {
+      for (const ev of existingVariants) {
+        if (
+          !parsedVariantNames.includes(
+            ev.name
+          )
+        ) {
           await client.query(
-            `INSERT INTO skus (variant_id,size,stock)
-             VALUES ($1,$2,$3)`,
-            [variantId, sku.size, sku.stock]
+            `DELETE FROM skus
+             WHERE variant_id=$1`,
+            [ev.id]
+          );
+
+          await client.query(
+            `DELETE FROM variants
+             WHERE id=$1`,
+            [ev.id]
           );
         }
       }
+
+      let totalStock = 0;
+
+      for (
+        let i = 0;
+        i < parsedVariants.length;
+        i++
+      ) {
+        const v = parsedVariants[i];
+
+        const existingVariant =
+          existingVariants.find(
+            (ev) => ev.name === v.name
+          );
+
+        let imageUrl =
+          existingVariant?.image_url ||
+          null;
+
+        if (req.files && req.files[i]) {
+          imageUrl =
+            await uploadFileToBucket(
+              req.files[i],
+              buckets.storeProducts
+            );
+        }
+
+        const variantStock =
+          Array.isArray(v.skus) &&
+          v.skus.length
+            ? v.skus.reduce(
+                (sum, sku) =>
+                  sum +
+                  Number(sku.stock || 0),
+                0
+              )
+            : Number(v.stock || 0);
+
+        totalStock += variantStock;
+
+        const pricing =
+          await calculatePricing({
+            client,
+            sellerPrice:
+              v.seller_price,
+            category,
+          });
+
+        let variantId;
+
+        if (existingVariant) {
+          await client.query(
+            `UPDATE variants
+             SET
+               seller_price=$1,
+               markup_price=$2,
+               final_price=$3,
+               stock=$4,
+               image_url=$5,
+               markup_percent=$6,
+               affiliate_markup_percent=$7
+             WHERE id=$8`,
+            [
+              pricing.seller_price,
+              pricing.markup_price,
+              pricing.final_price,
+              variantStock,
+              imageUrl,
+              pricing.markup_percentage,
+              pricing.affiliate_markup_percentage,
+              existingVariant.id,
+            ]
+          );
+
+          variantId =
+            existingVariant.id;
+
+          await client.query(
+            `DELETE FROM skus
+             WHERE variant_id=$1`,
+            [variantId]
+          );
+        } else {
+          const variantRes =
+            await client.query(
+              `INSERT INTO variants
+              (
+                product_id,
+                name,
+                seller_price,
+                markup_price,
+                final_price,
+                stock,
+                image_url,
+                markup_percent,
+                affiliate_markup_percent
+              )
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+              RETURNING id`,
+              [
+                productId,
+                v.name,
+                pricing.seller_price,
+                pricing.markup_price,
+                pricing.final_price,
+                variantStock,
+                imageUrl,
+                pricing.markup_percentage,
+                pricing.affiliate_markup_percentage,
+              ]
+            );
+
+          variantId =
+            variantRes.rows[0].id;
+        }
+
+        if (
+          Array.isArray(v.skus) &&
+          v.skus.length
+        ) {
+          for (const sku of v.skus) {
+            await client.query(
+              `INSERT INTO skus
+              (variant_id,size,stock)
+              VALUES ($1,$2,$3)`,
+              [
+                variantId,
+                sku.size,
+                sku.stock,
+              ]
+            );
+          }
+        }
+      }
+
+      await client.query(
+        `UPDATE products
+         SET stock=$1
+         WHERE id=$2`,
+        [totalStock, productId]
+      );
+
+      await client.query("COMMIT");
+
+      res.json({
+        message:
+          "Product updated successfully",
+      });
+    } catch (err) {
+      await client.query("ROLLBACK");
+
+      console.error(
+        "Update product error:",
+        err
+      );
+
+      res.status(500).json({
+        error:
+          "Failed to update product",
+      });
+    } finally {
+      client.release();
     }
-
-    await client.query(
-      `UPDATE products SET stock=$1 WHERE id=$2`,
-      [totalStock, productId]
-    );
-
-    await client.query("COMMIT");
-
-    res.json({ message: "Product updated successfully" });
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error("Update product error:", err);
-    res.status(500).json({ error: "Failed to update product" });
-  } finally {
-    client.release();
   }
-});
+);
 
 /* =========================================================
    DELETE PRODUCT
 ========================================================= */
-router.delete("/:storeId/products/:productId", async (req, res) => {
-  const client = await pool.connect();
+router.delete(
+  "/:storeId/products/:productId",
+  async (req, res) => {
+    const client = await pool.connect();
 
-  try {
-    const { storeId, productId } = req.params;
+    try {
+      const { storeId, productId } =
+        req.params;
 
-    const variantsRes = await client.query(
-      `SELECT id FROM variants WHERE product_id=$1`,
-      [productId]
-    );
+      const variantsRes =
+        await client.query(
+          `SELECT id
+           FROM variants
+           WHERE product_id=$1`,
+          [productId]
+        );
 
-    for (const v of variantsRes.rows) {
-      await client.query(`DELETE FROM skus WHERE variant_id=$1`, [v.id]);
+      for (const v of variantsRes.rows) {
+        await client.query(
+          `DELETE FROM skus
+           WHERE variant_id=$1`,
+          [v.id]
+        );
+      }
+
+      await client.query(
+        `DELETE FROM variants
+         WHERE product_id=$1`,
+        [productId]
+      );
+
+      await client.query(
+        `DELETE FROM products
+         WHERE id=$1
+         AND store_id=$2`,
+        [productId, storeId]
+      );
+
+      res.json({
+        message:
+          "Product deleted successfully",
+      });
+    } catch (err) {
+      console.error(
+        "Delete product error:",
+        err
+      );
+
+      res.status(500).json({
+        error:
+          "Failed to delete product",
+      });
+    } finally {
+      client.release();
     }
-
-    await client.query(`DELETE FROM variants WHERE product_id=$1`, [productId]);
-
-    await client.query(
-      `DELETE FROM products WHERE id=$1 AND store_id=$2`,
-      [productId, storeId]
-    );
-
-    res.json({ message: "Product deleted successfully" });
-  } catch (err) {
-    console.error("Delete product error:", err);
-    res.status(500).json({ error: "Failed to delete product" });
-  } finally {
-    client.release();
   }
-});
+);
 
 module.exports = router;
