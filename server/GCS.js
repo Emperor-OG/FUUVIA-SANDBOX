@@ -30,26 +30,82 @@ const buckets = {
 };
 
 // Upload file
-async function uploadFileToBucket(file, bucket) {
-  if (!bucket || typeof bucket.file !== "function") {
-    throw new Error("Invalid bucket provided to uploadFileToBucket()");
+async function uploadFileToBucket(
+  file,
+  bucket
+) {
+  if (!file) {
+    return null;
   }
 
-  const blob = bucket.file(`${Date.now()}-${file.originalname}`);
-  const blobStream = blob.createWriteStream({
-    resumable: false,
-    contentType: file.mimetype,
-  });
+  if (
+    !bucket ||
+    typeof bucket.file !== "function"
+  ) {
+    throw new Error(
+      "Invalid bucket provided to uploadFileToBucket()"
+    );
+  }
 
-  return new Promise((resolve, reject) => {
-    blobStream.on("error", reject);
-    blobStream.on("finish", () => {
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-      console.log(`Uploaded to ${bucket.name}: ${blob.name}`);
-      resolve(publicUrl);
-    });
-    blobStream.end(file.buffer);
-  });
+  return new Promise(
+    (resolve, reject) => {
+      const fileName = `${Date.now()}-${
+        file.originalname
+      }`;
+
+      const blob = bucket.file(fileName);
+
+      const blobStream =
+        blob.createWriteStream({
+          resumable: false,
+          metadata: {
+            contentType:
+              file.mimetype,
+          },
+        });
+
+      let finished = false;
+
+      blobStream.on(
+        "error",
+        (err) => {
+          if (finished) return;
+
+          finished = true;
+
+          console.error(
+            "GCS Upload Error:",
+            err
+          );
+
+          reject(err);
+        }
+      );
+
+      blobStream.on(
+        "finish",
+        async () => {
+          try {
+            if (finished) return;
+
+            finished = true;
+
+            const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+
+            console.log(
+              `Uploaded to ${bucket.name}: ${blob.name}`
+            );
+
+            resolve(publicUrl);
+          } catch (err) {
+            reject(err);
+          }
+        }
+      );
+
+      blobStream.end(file.buffer);
+    }
+  );
 }
 
 // Delete file
