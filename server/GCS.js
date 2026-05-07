@@ -1,23 +1,6 @@
 const { Storage } = require("@google-cloud/storage");
 
-/* =========================================================
-   ENV VALIDATION
-========================================================= */
-const requiredEnv = [
-  "GCP_PROJECT_ID",
-  "GCP_PRIVATE_KEY",
-  "GCP_CLIENT_EMAIL",
-];
-
-for (const key of requiredEnv) {
-  if (!process.env[key]) {
-    throw new Error(`Missing ${key}`);
-  }
-}
-
-/* =========================================================
-   CREDENTIALS
-========================================================= */
+// Build credentials object from .env
 const credentials = {
   type: "service_account",
   project_id: process.env.GCP_PROJECT_ID,
@@ -27,22 +10,16 @@ const credentials = {
   client_id: process.env.GCP_CLIENT_ID,
   auth_uri: process.env.GCP_AUTH_URI,
   token_uri: process.env.GCP_TOKEN_URI,
-  auth_provider_x509_cert_url:
-    process.env.GCP_AUTH_PROVIDER_CERT_URL,
+  auth_provider_x509_cert_url: process.env.GCP_AUTH_PROVIDER_CERT_URL,
   client_x509_cert_url: process.env.GCP_CLIENT_CERT_URL,
 };
 
-/* =========================================================
-   STORAGE INIT
-========================================================= */
 const storage = new Storage({
   credentials,
   projectId: process.env.GCP_PROJECT_ID,
 });
 
-/* =========================================================
-   BUCKETS
-========================================================= */
+// Buckets
 const buckets = {
   storeProducts: storage.bucket(process.env.STORE_PRODUCTS),
   storeLogos: storage.bucket(process.env.STORE_LOGOS),
@@ -52,56 +29,36 @@ const buckets = {
   proofOfResidence: storage.bucket(process.env.PROOF_OF_RESIDENCE),
 };
 
-/* =========================================================
-   SAFE UPLOAD (NO STREAMS — BULLETPROOF)
-========================================================= */
+// Upload file
 async function uploadFileToBucket(file, bucket) {
-  if (!file) return null;
-
-  if (!file.buffer) {
-    throw new Error(
-      "File buffer missing. Ensure multer.memoryStorage() is used."
-    );
-  }
-
   if (!bucket || typeof bucket.file !== "function") {
-    throw new Error("Invalid bucket provided");
+    throw new Error("Invalid bucket provided to uploadFileToBucket()");
   }
 
-  const fileName = `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 10)}-${file.originalname}`;
+  const blob = bucket.file(`${Date.now()}-${file.originalname}`);
+  const blobStream = blob.createWriteStream({
+    resumable: false,
+    contentType: file.mimetype,
+  });
 
-  const blob = bucket.file(fileName);
-
-  try {
-    // ✅ IMPORTANT: NO STREAMS, NO HASH VALIDATION ISSUES
-    await blob.save(file.buffer, {
-      resumable: false,
-      validation: false, // 🔥 disables HashStreamValidator completely
-      contentType: file.mimetype,
-      metadata: {
-        cacheControl: "public, max-age=31536000",
-      },
+  return new Promise((resolve, reject) => {
+    blobStream.on("error", reject);
+    blobStream.on("finish", () => {
+      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+      console.log(`Uploaded to ${bucket.name}: ${blob.name}`);
+      resolve(publicUrl);
     });
-
-    return `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-  } catch (err) {
-    console.error("GCS upload failed:", err);
-    throw err;
-  }
+    blobStream.end(file.buffer);
+  });
 }
 
-/* =========================================================
-   DELETE FILE
-========================================================= */
+// Delete file
 async function deleteFileFromBucket(bucket, fileUrl) {
   try {
     if (!fileUrl) return;
 
     const parts = fileUrl.split("/");
     const fileName = decodeURIComponent(parts.slice(4).join("/"));
-
     await bucket.file(fileName).delete();
 
     console.log(`Deleted file: ${fileName}`);
@@ -114,11 +71,5 @@ async function deleteFileFromBucket(bucket, fileUrl) {
   }
 }
 
-/* =========================================================
-   EXPORTS
-========================================================= */
-module.exports = {
-  buckets,
-  uploadFileToBucket,
-  deleteFileFromBucket,
-};
+
+module.exports = { buckets, uploadFileToBucket, deleteFileFromBucket };
