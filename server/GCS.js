@@ -1,7 +1,9 @@
 const { Storage } = require("@google-cloud/storage");
+const path = require("path");
+const crypto = require("crypto");
 
 /* =========================================================
-   CREDENTIALS
+   CREDENTIALS (SAFE)
 ========================================================= */
 const credentials = {
   type: "service_account",
@@ -16,6 +18,9 @@ const credentials = {
   client_x509_cert_url: process.env.GCP_CLIENT_CERT_URL,
 };
 
+/* =========================================================
+   STORAGE INIT
+========================================================= */
 const storage = new Storage({
   projectId: process.env.GCP_PROJECT_ID,
   credentials,
@@ -34,53 +39,76 @@ const buckets = {
 };
 
 /* =========================================================
-   UPLOAD (FIXED + ROBUST)
+   SAFE FILE UPLOAD (FIXED STREAM HANDLING)
 ========================================================= */
 async function uploadFileToBucket(file, bucket) {
   if (!file) return null;
-
-  if (!file.buffer) {
-    throw new Error("File buffer missing (multer config issue)");
-  }
-
-  const safeName = `${Date.now()}-${Math.random()
-    .toString(36)
-    .substring(2)}-${file.originalname.replace(/\s/g, "_")}`;
-
-  const blob = bucket.file(safeName);
+  if (!bucket?.file) throw new Error("Invalid bucket provided");
+  if (!file.buffer) throw new Error("File buffer missing (multer issue)");
 
   return new Promise((resolve, reject) => {
-    const stream = blob.createWriteStream({
+    // UNIQUE SAFE FILE NAME
+    const safeName = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${path.extname(file.originalname || "")}`;
+
+    const blob = bucket.file(safeName);
+
+    const blobStream = blob.createWriteStream({
       resumable: false,
       metadata: {
         contentType: file.mimetype,
+        cacheControl: "public, max-age=31536000",
       },
+      timeout: 120000,
     });
 
-    stream.on("error", (err) => {
+    let finished = false;
+
+    const cleanup = (err) => {
+      if (finished) return;
+      finished = true;
+
+      blobStream.removeAllListeners();
+
+      if (err) {
+        return reject(err);
+      }
+    };
+
+    blobStream.on("error", (err) => {
       console.error("GCS upload error:", err);
-      reject(err);
+      cleanup(err);
     });
 
-    stream.on("finish", () => {
-      resolve(
-        `https://storage.googleapis.com/${bucket.name}/${blob.name}`
-      );
+    blobStream.on("finish", () => {
+      if (finished) return;
+      finished = true;
+
+      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+      resolve(publicUrl);
     });
 
-    stream.end(file.buffer);
+    try {
+      // IMPORTANT: ensure buffer is isolated per upload
+      const buffer = Buffer.from(file.buffer);
+
+      blobStream.end(buffer);
+    } catch (err) {
+      cleanup(err);
+    }
   });
 }
 
 /* =========================================================
-   DELETE
+   DELETE FILE (SAFE PARSING)
 ========================================================= */
 async function deleteFileFromBucket(bucket, fileUrl) {
   try {
     if (!fileUrl) return;
 
-    const parts = fileUrl.split(`/storage.googleapis.com/${bucket.name}/`);
-    const fileName = parts[1];
+    const base = `https://storage.googleapis.com/${bucket.name}/`;
+    const fileName = fileUrl.startsWith(base)
+      ? fileUrl.replace(base, "")
+      : null;
 
     if (!fileName) return;
 
@@ -92,6 +120,9 @@ async function deleteFileFromBucket(bucket, fileUrl) {
   }
 }
 
+/* =========================================================
+   EXPORTS
+========================================================= */
 module.exports = {
   storage,
   buckets,
