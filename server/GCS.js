@@ -11,6 +11,10 @@ if (!process.env.GCP_PRIVATE_KEY) {
   throw new Error("Missing GCP_PRIVATE_KEY");
 }
 
+if (!process.env.GCP_CLIENT_EMAIL) {
+  throw new Error("Missing GCP_CLIENT_EMAIL");
+}
+
 /* =========================================================
    CREDENTIALS
 ========================================================= */
@@ -45,25 +49,22 @@ const buckets = {
   storeBanners: storage.bucket(process.env.STORE_BANNERS),
   storeDocuments: storage.bucket(process.env.STORE_DOCUMENTS),
   storePOA: storage.bucket(process.env.STORE_POA),
-  proofOfResidence: storage.bucket(
-    process.env.PROOF_OF_RESIDENCE
-  ),
+  proofOfResidence: storage.bucket(process.env.PROOF_OF_RESIDENCE),
 };
 
 /* =========================================================
-   UPLOAD (ROBUST VERSION)
+   UPLOAD (FINAL FIX — BUFFER ONLY, NO STREAMS)
 ========================================================= */
 async function uploadFileToBucket(file, bucket) {
   if (!file) return null;
 
   if (!bucket || typeof bucket.file !== "function") {
-    throw new Error("Invalid bucket provided");
+    throw new Error("Invalid bucket provided to uploadFileToBucket()");
   }
 
-  // SAFETY: ensure buffer exists
   if (!file.buffer) {
     throw new Error(
-      "File buffer missing - check multer memoryStorage()"
+      "File buffer missing. Ensure multer.memoryStorage() is used."
     );
   }
 
@@ -73,8 +74,9 @@ async function uploadFileToBucket(file, bucket) {
 
   const blob = bucket.file(safeName);
 
-  return new Promise((resolve, reject) => {
-    const stream = blob.createWriteStream({
+  try {
+    // ✅ NO STREAMS — avoids HashStreamValidator crash completely
+    await blob.save(file.buffer, {
       resumable: false,
       contentType: file.mimetype,
       metadata: {
@@ -82,28 +84,13 @@ async function uploadFileToBucket(file, bucket) {
       },
     });
 
-    stream.on("error", (err) => {
-      console.error("GCS upload error:", err);
-      reject(err);
-    });
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${safeName}`;
 
-    stream.on("finish", async () => {
-      try {
-        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-        resolve(publicUrl);
-      } catch (err) {
-        reject(err);
-      }
-    });
-
-    // IMPORTANT SAFE WRITE
-    try {
-      stream.end(file.buffer);
-    } catch (err) {
-      console.error("Stream write failed:", err);
-      reject(err);
-    }
-  });
+    return publicUrl;
+  } catch (err) {
+    console.error("GCS upload error:", err);
+    throw err;
+  }
 }
 
 /* =========================================================
@@ -128,6 +115,9 @@ async function deleteFileFromBucket(bucket, fileUrl) {
   }
 }
 
+/* =========================================================
+   EXPORTS
+========================================================= */
 module.exports = {
   buckets,
   uploadFileToBucket,
