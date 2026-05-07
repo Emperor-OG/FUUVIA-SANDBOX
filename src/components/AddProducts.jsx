@@ -1,52 +1,35 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
+import { useEffect, useState } from "react";
 import "../styles/AddProducts.css";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 /* =========================================================
-   ADD IMAGE BUTTON
+   IMAGE COMPONENT
 ========================================================= */
-function AddImageButton({
-  image,
-  onChange,
-  variantIndex,
-}) {
+function AddImageButton({ image, onChange, variantIndex }) {
   const inputId = `variant-image-${variantIndex}`;
 
   return (
     <div
       className="add-image-card"
-      onClick={() =>
-        document
-          .getElementById(inputId)
-          .click()
-      }
+      onClick={() => document.getElementById(inputId).click()}
     >
       <input
         id={inputId}
         type="file"
         accept="image/*"
         style={{ display: "none" }}
-        onChange={(e) =>
-          onChange(e.target.files[0])
-        }
+        onChange={(e) => onChange(e.target.files[0])}
       />
 
       {!image && (
-        <div className="add-image-placeholder">
-          + Add Image
-        </div>
+        <div className="add-image-placeholder">+ Add Image</div>
       )}
 
       {image && (
         <img
           src={URL.createObjectURL(image)}
-          alt="Preview"
+          alt="preview"
           className="image-preview"
         />
       )}
@@ -55,7 +38,7 @@ function AddImageButton({
 }
 
 /* =========================================================
-   ADD PRODUCTS
+   MAIN COMPONENT
 ========================================================= */
 export default function AddProducts({
   storeId,
@@ -63,84 +46,56 @@ export default function AddProducts({
   onClose,
   onProductAdded,
 }) {
-  /* =========================================================
+  /* -------------------------
      STATE
-  ========================================================= */
-  const [categories, setCategories] =
-    useState([]);
+  ------------------------- */
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
 
-  const [name, setName] =
-    useState("");
+  // NOW USING category_id (NOT STRING)
+  const [categoryId, setCategoryId] = useState("");
 
-  const [description, setDescription] =
-    useState("");
+  const [categories, setCategories] = useState([]);
 
-  const [category, setCategory] =
-    useState("");
+  const [variants, setVariants] = useState([
+    {
+      name: "",
+      seller_price: "",
+      stock: "",
+      image: null,
+      skus: [],
+    },
+  ]);
 
-  const [variants, setVariants] =
-    useState([
-      {
-        name: "",
-        seller_price: "",
-        stock: "",
-        image: null,
-        skus: [],
-      },
-    ]);
+  const [loading, setLoading] = useState(false);
 
-  const [loading, setLoading] =
-    useState(false);
-
-  const [loadingCategories, setLoadingCategories] =
-    useState(true);
-
-  /* =========================================================
-     FETCH CATEGORIES
-  ========================================================= */
+  /* -------------------------
+     FETCH CATEGORIES FROM DB
+  ------------------------- */
   useEffect(() => {
+    if (!isOpen) return;
+
     const fetchCategories = async () => {
       try {
-        const res = await fetch(
-          `${API_URL}/api/categories`
-        );
-
-        if (!res.ok) {
-          throw new Error(
-            "Failed to fetch categories"
-          );
-        }
-
+        const res = await fetch(`${API_URL}/api/categories`);
         const data = await res.json();
-
         setCategories(data);
       } catch (err) {
-        console.error(
-          "Categories fetch error:",
-          err
-        );
-      } finally {
-        setLoadingCategories(false);
+        console.error("Failed to load categories", err);
       }
     };
 
     fetchCategories();
-  }, []);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  /* =========================================================
-     VARIANT FUNCTIONS
-  ========================================================= */
-  const handleVariantChange = (
-    index,
-    field,
-    value
-  ) => {
+  /* -------------------------
+     VARIANTS
+  ------------------------- */
+  const handleVariantChange = (index, field, value) => {
     const updated = [...variants];
-
     updated[index][field] = value;
-
     setVariants(updated);
   };
 
@@ -158,126 +113,72 @@ export default function AddProducts({
   };
 
   const removeVariant = (index) => {
-    setVariants(
-      variants.filter((_, i) => i !== index)
-    );
+    setVariants(variants.filter((_, i) => i !== index));
   };
 
-  const handleImageChange = (
-    index,
-    file
-  ) => {
+  const handleImageChange = (index, file) => {
     const updated = [...variants];
-
     updated[index].image = file;
-
     setVariants(updated);
   };
 
-  /* =========================================================
-     SKU FUNCTIONS
-  ========================================================= */
+  /* -------------------------
+     SKU LOGIC
+  ------------------------- */
   const addSku = (variantIndex) => {
     const updated = [...variants];
-
-    updated[variantIndex].skus.push({
-      size: "",
-      stock: "",
-    });
-
-    updated[variantIndex].stock = "";
-
+    updated[variantIndex].skus.push({ size: "", stock: "" });
     setVariants(updated);
   };
 
-  const removeSku = (
-    variantIndex,
-    skuIndex
-  ) => {
+  const removeSku = (vIndex, skuIndex) => {
     const updated = [...variants];
-
-    updated[variantIndex].skus =
-      updated[variantIndex].skus.filter(
-        (_, i) => i !== skuIndex
-      );
-
+    updated[vIndex].skus = updated[vIndex].skus.filter(
+      (_, i) => i !== skuIndex
+    );
     setVariants(updated);
   };
 
-  const handleSkuChange = (
-    variantIndex,
-    skuIndex,
-    field,
-    value
-  ) => {
+  const handleSkuChange = (vIndex, skuIndex, field, value) => {
     const updated = [...variants];
-
-    updated[variantIndex].skus[skuIndex][
-      field
-    ] = value;
-
+    updated[vIndex].skus[skuIndex][field] = value;
     setVariants(updated);
   };
 
-  const calculateVariantStock = (
-    variant
-  ) => {
-    if (!variant.skus.length) {
-      return variant.stock || 0;
-    }
+  const calculateVariantStock = (variant) => {
+    if (!variant.skus.length) return Number(variant.stock || 0);
 
     return variant.skus.reduce(
-      (total, sku) =>
-        total + Number(sku.stock || 0),
+      (sum, sku) => sum + Number(sku.stock || 0),
       0
     );
   };
 
-  /* =========================================================
-     SUBMIT
-  ========================================================= */
+  /* -------------------------
+     SUBMIT (NO PRICING LOGIC)
+  ------------------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setLoading(true);
 
     try {
       const formData = new FormData();
 
       formData.append("name", name);
+      formData.append("description", description);
+      formData.append("category_id", categoryId);
 
-      formData.append(
-        "description",
-        description
-      );
+      const variantData = variants.map((v) => ({
+        name: v.name,
+        seller_price: v.seller_price,
+        stock: calculateVariantStock(v),
+        skus: v.skus,
+      }));
 
-      formData.append(
-        "category",
-        category
-      );
-
-      const variantData = variants.map(
-        (v) => ({
-          name: v.name,
-          seller_price: v.seller_price,
-          stock:
-            calculateVariantStock(v),
-          skus: v.skus,
-        })
-      );
-
-      formData.append(
-        "variants",
-        JSON.stringify(variantData)
-      );
+      formData.append("variants", JSON.stringify(variantData));
 
       variants.forEach((v) => {
-        if (v.image) {
-          formData.append(
-            "images",
-            v.image
-          );
-        }
+        if (v.image) formData.append("images", v.image);
       });
 
       const res = await fetch(
@@ -288,25 +189,16 @@ export default function AddProducts({
         }
       );
 
-      if (!res.ok) {
-        throw new Error(
-          "Failed to create product"
-        );
-      }
-
       const data = await res.json();
 
-      if (onProductAdded) {
-        onProductAdded(data);
-      }
+      if (!res.ok) throw new Error(data.error || "Failed");
 
-      /* RESET */
+      onProductAdded?.(data);
+
+      // reset
       setName("");
-
       setDescription("");
-
-      setCategory("");
-
+      setCategoryId("");
       setVariants([
         {
           name: "",
@@ -320,83 +212,53 @@ export default function AddProducts({
       onClose();
     } catch (err) {
       console.error(err);
-
       alert("Error creating product");
     } finally {
       setLoading(false);
     }
   };
 
-  /* =========================================================
-     RENDER
-  ========================================================= */
+  /* -------------------------
+     UI
+  ------------------------- */
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <button
-          className="modal-close"
-          onClick={onClose}
-        >
+
+        <button className="modal-close" onClick={onClose}>
           ✕
         </button>
 
-        <form
-          onSubmit={handleSubmit}
-          className="add-product-form"
-        >
+        <form onSubmit={handleSubmit} className="add-product-form">
           <h2>Add Product</h2>
 
-          {/* PRODUCT NAME */}
           <label>Product Name</label>
-
           <input
             className="form-input"
-            placeholder="Product Name"
             value={name}
-            onChange={(e) =>
-              setName(e.target.value)
-            }
+            onChange={(e) => setName(e.target.value)}
             required
           />
 
-          {/* DESCRIPTION */}
           <label>Description</label>
-
           <textarea
             className="form-input"
-            placeholder="Description"
             value={description}
-            onChange={(e) =>
-              setDescription(
-                e.target.value
-              )
-            }
+            onChange={(e) => setDescription(e.target.value)}
           />
 
-          {/* CATEGORY */}
+          {/* ================= CATEGORY FROM DB ================= */}
           <label>Category</label>
-
           <select
             className="form-input"
-            value={category}
-            onChange={(e) =>
-              setCategory(
-                e.target.value
-              )
-            }
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
             required
           >
-            <option value="">
-              {loadingCategories
-                ? "Loading categories..."
-                : "Select Category"}
-            </option>
+            <option value="">Select Category</option>
 
             {categories.map((cat) => (
-              <option
-                key={cat.id}
-                value={cat.name}
-              >
+              <option key={cat.id} value={cat.id}>
                 {cat.name}
               </option>
             ))}
@@ -404,240 +266,132 @@ export default function AddProducts({
 
           <h3>Variants</h3>
 
-          {/* VARIANTS */}
-          {variants.map(
-            (variant, vIndex) => (
-              <div
-                key={vIndex}
-                className="variant-card"
-              >
-                <h4>
-                  Variant {vIndex + 1}
-                </h4>
+          {variants.map((variant, vIndex) => (
+            <div key={vIndex} className="variant-card">
+              <h4>Variant {vIndex + 1}</h4>
 
-                <AddImageButton
-                  variantIndex={vIndex}
-                  image={variant.image}
-                  onChange={(file) =>
-                    handleImageChange(
-                      vIndex,
-                      file
-                    )
-                  }
-                />
+              <AddImageButton
+                variantIndex={vIndex}
+                image={variant.image}
+                onChange={(file) =>
+                  handleImageChange(vIndex, file)
+                }
+              />
 
-                {/* VARIANT NAME */}
-                <label>
-                  Variant Name
-                </label>
+              <label>Variant Name</label>
+              <input
+                className="form-input"
+                value={variant.name}
+                onChange={(e) =>
+                  handleVariantChange(
+                    vIndex,
+                    "name",
+                    e.target.value
+                  )
+                }
+              />
 
-                <input
-                  className="form-input"
-                  placeholder="Variant Name"
-                  value={variant.name}
-                  onChange={(e) =>
-                    handleVariantChange(
-                      vIndex,
-                      "name",
-                      e.target.value
-                    )
-                  }
-                />
+              <label>Seller Price</label>
+              <input
+                className="form-input"
+                type="number"
+                value={variant.seller_price}
+                onChange={(e) =>
+                  handleVariantChange(
+                    vIndex,
+                    "seller_price",
+                    e.target.value
+                  )
+                }
+                required
+              />
 
-                {/* SELLER PRICE */}
-                <label>
-                  Seller Price
-                </label>
+              <label>Stock</label>
+              <input
+                className="form-input"
+                type="number"
+                value={variant.stock}
+                onChange={(e) =>
+                  handleVariantChange(
+                    vIndex,
+                    "stock",
+                    e.target.value
+                  )
+                }
+              />
 
-                <input
-                  className="form-input"
-                  type="number"
-                  placeholder="Seller Price"
-                  value={
-                    variant.seller_price
-                  }
-                  onChange={(e) =>
-                    handleVariantChange(
-                      vIndex,
-                      "seller_price",
-                      e.target.value
-                    )
-                  }
-                  required
-                />
-
-                <div className="final-price">
-                  Final selling price will
-                  be calculated
-                  automatically based on
-                  category pricing.
-                </div>
-
-                {/* STOCK */}
-                {variant.skus.length ===
-                  0 && (
-                  <>
-                    <label>
-                      Variant Stock
-                    </label>
-
-                    <input
-                      className="form-input"
-                      type="number"
-                      placeholder="Variant Stock"
-                      value={
-                        variant.stock
-                      }
-                      onChange={(e) =>
-                        handleVariantChange(
-                          vIndex,
-                          "stock",
-                          e.target.value
-                        )
-                      }
-                    />
-                  </>
-                )}
-
-                {/* SKUS */}
-                {variant.skus.length >
-                  0 && (
-                  <div>
-                    <h4>SKUs</h4>
-
-                    {variant.skus.map(
-                      (
-                        sku,
-                        skuIndex
-                      ) => (
-                        <div
-                          key={skuIndex}
-                          className="sku-row"
-                        >
-                          <label>
-                            Size
-                          </label>
-
-                          <input
-                            className="form-input"
-                            placeholder="Size"
-                            value={sku.size}
-                            onChange={(
-                              e
-                            ) =>
-                              handleSkuChange(
-                                vIndex,
-                                skuIndex,
-                                "size",
-                                e.target
-                                  .value
-                              )
-                            }
-                          />
-
-                          <label>
-                            Stock
-                          </label>
-
-                          <input
-                            className="form-input"
-                            type="number"
-                            placeholder="Stock"
-                            value={sku.stock}
-                            onChange={(
-                              e
-                            ) =>
-                              handleSkuChange(
-                                vIndex,
-                                skuIndex,
-                                "stock",
-                                e.target
-                                  .value
-                              )
-                            }
-                          />
-
-                          <button
-                            type="button"
-                            className="remove-btn"
-                            onClick={() =>
-                              removeSku(
-                                vIndex,
-                                skuIndex
-                              )
-                            }
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      )
-                    )}
-                  </div>
-                )}
-
-                {/* ADD SKU */}
-                <button
-                  type="button"
-                  className="add-btn"
-                  onClick={() =>
-                    addSku(vIndex)
-                  }
-                >
-                  Add SKU
-                </button>
-
-                {/* REMOVE VARIANT */}
-                {variants.length > 1 && (
-                  <button
-                    type="button"
-                    className="remove-btn"
-                    onClick={() =>
-                      removeVariant(
-                        vIndex
+              {/* SKU */}
+              {variant.skus.map((sku, sIndex) => (
+                <div key={sIndex} className="sku-row">
+                  <input
+                    placeholder="Size"
+                    value={sku.size}
+                    onChange={(e) =>
+                      handleSkuChange(
+                        vIndex,
+                        sIndex,
+                        "size",
+                        e.target.value
                       )
                     }
+                  />
+
+                  <input
+                    type="number"
+                    placeholder="Stock"
+                    value={sku.stock}
+                    onChange={(e) =>
+                      handleSkuChange(
+                        vIndex,
+                        sIndex,
+                        "stock",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeSku(vIndex, sIndex)
+                    }
                   >
-                    Remove Variant
+                    Remove
                   </button>
-                )}
-
-                {/* TOTAL STOCK */}
-                <div className="variant-stock">
-                  Variant Total Stock:{" "}
-                  {calculateVariantStock(
-                    variant
-                  )}
                 </div>
-              </div>
-            )
-          )}
+              ))}
 
-          {/* ADD VARIANT */}
-          <button
-            type="button"
-            className="add-btn"
-            onClick={addVariant}
-          >
+              <button
+                type="button"
+                onClick={() => addSku(vIndex)}
+              >
+                Add SKU
+              </button>
+
+              <div className="variant-stock">
+                Total Stock: {calculateVariantStock(variant)}
+              </div>
+
+              {variants.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeVariant(vIndex)}
+                >
+                  Remove Variant
+                </button>
+              )}
+            </div>
+          ))}
+
+          <button type="button" onClick={addVariant}>
             Add Variant
           </button>
 
-          <br />
-          <br />
-
-          {/* SUBMIT */}
-          <button
-            type="submit"
-            className="submit-btn"
-            disabled={
-              loading ||
-              loadingCategories
-            }
-          >
-            {loading
-              ? "Saving..."
-              : "Add Product"}
+          <button type="submit" disabled={loading}>
+            {loading ? "Saving..." : "Add Product"}
           </button>
         </form>
+
       </div>
     </div>
   );
