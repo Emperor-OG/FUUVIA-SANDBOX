@@ -2,32 +2,36 @@ const DEFAULT_MARKUP_PERCENTAGE = Number(
   process.env.MARKUP_PERCENTAGE || 12
 );
 
-const AFFILIATE_MARKUP = Number(process.env.AFFILIATE_MARKUP || 15);
+// FIXED affiliate fee (R15 recommended per your design)
+const AFFILIATE_MARKUP = Number(
+  process.env.AFFILIATE_MARKUP || 15
+);
 
 function roundCurrency(value) {
   return Number((Number(value) || 0).toFixed(2));
 }
 
 /**
- * Core pricing engine (SAFE + FALLBACK READY)
+ * CORE PRICING ENGINE (CATEGORY SAFE + NULL SAFE)
  */
 function calculateFinalPrice({
   sellerPrice,
   categoryMarkupPercent,
 }) {
-  const safeSellerPrice = Number(sellerPrice || 0);
+  const price = Number(sellerPrice || 0);
 
-  // fallback logic
+  // fallback system:
+  // 1. category markup if exists
+  // 2. fallback global markup
   const effectiveMarkup =
-    categoryMarkupPercent == null
+    categoryMarkupPercent == null ||
+    isNaN(categoryMarkupPercent)
       ? DEFAULT_MARKUP_PERCENTAGE
       : Number(categoryMarkupPercent);
 
-  const categoryAmount =
-    safeSellerPrice * (effectiveMarkup / 100);
+  const categoryAmount = price * (effectiveMarkup / 100);
 
-  const final =
-    safeSellerPrice + categoryAmount + AFFILIATE_MARKUP;
+  const final = price + categoryAmount + AFFILIATE_MARKUP;
 
   return roundCurrency(final);
 }
